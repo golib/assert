@@ -6,6 +6,7 @@
 package assert
 
 import (
+	"io"
 	http "net/http"
 	url "net/url"
 	time "time"
@@ -349,4 +350,14 @@ func (a *Assertions) WithinDuration(expected time.Time, actual time.Time, delta 
 // Zero asserts that i is the zero value for its type and returns the truth.
 func (a *Assertions) Zero(i interface{}, msgAndArgs ...interface{}) bool {
 	return Zero(a.t, i, msgAndArgs...)
+}
+
+// ReaderContains asserts that reader contains the specified substring or element.
+func (a *Assertions) ReaderContains(reader io.Reader, contains interface{}, msgAndArgs ...interface{}) bool {
+	return ReaderContains(a.t, reader, contains, msgAndArgs)
+}
+
+// ReaderContains asserts that reader does NOT contain the specified substring or element.
+func (a *Assertions) ReaderNotContains(reader io.Reader, contains interface{}, msgAndArgs ...interface{}) bool {
+	return ReaderNotContains(a.t, reader, contains, msgAndArgs)
 }

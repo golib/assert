@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"reflect"
 	"regexp"
@@ -13,6 +14,8 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"io/ioutil"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pmezard/go-difflib/difflib"
@@ -181,7 +184,7 @@ func indentMessageLines(message string, longestLabelLen int) string {
 		// no need to align first line because it starts at the correct location (after the label)
 		if i != 0 {
 			// append alignLen+1 spaces to align with "{{longestLabel}}:" before adding tab
-			outBuf.WriteString("\n\r\t" + strings.Repeat(" ", longestLabelLen +1) + "\t")
+			outBuf.WriteString("\n\r\t" + strings.Repeat(" ", longestLabelLen+1) + "\t")
 		}
 		outBuf.WriteString(scanner.Text())
 	}
@@ -229,7 +232,7 @@ func Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
 }
 
 type labeledContent struct {
-	label string
+	label   string
 	content string
 }
 
@@ -1014,6 +1017,34 @@ func JSONEq(t TestingT, expected string, actual string, msgAndArgs ...interface{
 	}
 
 	return Equal(t, expectedJSONAsInterface, actualJSONAsInterface, msgAndArgs...)
+}
+
+// ReaderContains asserts that the specified io.Reader contains the specified substring or element.
+//
+//    assert.ReaderContains(t, http.Response.Body, "Earth", "But 'http.Response.Body' does NOT contain 'Earth'")
+//
+// Returns whether the assertion was successful (true) or not (false).
+func ReaderContains(t TestingT, reader io.Reader, contains interface{}, msgAndArgs ...interface{}) bool {
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return Fail(t, fmt.Sprintf("Error read from \"%T\" of \"%s\"", reader, err.Error()), msgAndArgs...)
+	}
+
+	return Contains(t, string(data), contains, msgAndArgs...)
+}
+
+// ReaderContains asserts that the specified io.Reader does not contain the specified substring or element.
+//
+//    assert.ReaderNotContains(t, http.Response.Body, "Earth", "But 'http.Response.Body' does NOT contain 'Earth'")
+//
+// Returns whether the assertion was successful (true) or not (false).
+func ReaderNotContains(t TestingT, reader io.Reader, contains interface{}, msgAndArgs ...interface{}) bool {
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return Fail(t, fmt.Sprintf("Error read from \"%T\" of \"%s\"", reader, err.Error()), msgAndArgs...)
+	}
+
+	return NotContains(t, string(data), contains, msgAndArgs...)
 }
 
 func typeAndKind(v interface{}) (reflect.Type, reflect.Kind) {

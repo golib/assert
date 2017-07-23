@@ -1283,3 +1283,29 @@ func TestFailNowWithFullTestingT(t *testing.T) {
 		FailNow(mockT, "failed")
 	}, "should call mockT.FailNow() rather than panicking")
 }
+
+func TestReaderContains(t *testing.T) {
+
+	mockT := new(testing.T)
+	reader := strings.NewReader("Hello, World")
+
+	if !ReaderContains(mockT, reader, "Hello") {
+		t.Error("Contains should return true: \"Hello World\" contains \"Hello\"")
+	}
+	if ReaderContains(mockT, reader, "Salut") {
+		t.Error("Contains should return false: \"Hello World\" does not contain \"Salut\"")
+	}
+}
+
+func TestReaderNotContains(t *testing.T) {
+
+	mockT := new(testing.T)
+	reader := strings.NewReader("Hello, World")
+
+	if ReaderNotContains(mockT, reader, "Hello") {
+		t.Error("Contains should return true: \"Hello World\" contains \"Hello\"")
+	}
+	if !ReaderNotContains(mockT, reader, "Salut") {
+		t.Error("Contains should return false: \"Hello World\" does not contain \"Salut\"")
+	}
+}
