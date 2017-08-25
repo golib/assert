@@ -1030,6 +1030,12 @@ func ReaderContains(t TestingT, reader io.Reader, contains interface{}, msgAndAr
 		return Fail(t, fmt.Sprintf("Error read from \"%T\" of \"%s\"", reader, err.Error()), msgAndArgs...)
 	}
 
+	// try to close reader if it's io.Closer and reset reader
+	if ioc, ok := reader.(io.Closer); ok {
+		ioc.Close()
+	}
+	reader = ioutil.NopCloser(bytes.NewReader(data))
+
 	return Contains(t, string(data), contains, msgAndArgs...)
 }
 
@@ -1043,6 +1049,12 @@ func ReaderNotContains(t TestingT, reader io.Reader, contains interface{}, msgAn
 	if err != nil {
 		return Fail(t, fmt.Sprintf("Error read from \"%T\" of \"%s\"", reader, err.Error()), msgAndArgs...)
 	}
+
+	// try to close reader if it's io.Closer and reset reader
+	if ioc, ok := reader.(io.Closer); ok {
+		ioc.Close()
+	}
+	reader = ioutil.NopCloser(bytes.NewReader(data))
 
 	return NotContains(t, string(data), contains, msgAndArgs...)
 }
