@@ -1,5 +1,7 @@
 ## assert
 
+[![Build Status](https://travis-ci.org/golib/assert.svg?branch=master)](https://travis-ci.org/golib/assert)
+
 > golang assertion lib copied from [testify](https://github.com/stretchr/testify)
 
 Assertions allow you to easily write test code, and are global funcs in the `assert` package.
