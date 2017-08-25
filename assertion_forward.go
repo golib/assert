@@ -354,10 +354,10 @@ func (a *Assertions) Zero(i interface{}, msgAndArgs ...interface{}) bool {
 
 // ReaderContains asserts that reader contains the specified substring or element.
 func (a *Assertions) ReaderContains(reader io.Reader, contains interface{}, msgAndArgs ...interface{}) bool {
-	return ReaderContains(a.t, reader, contains, msgAndArgs)
+	return ReaderContains(a.t, reader, contains, msgAndArgs...)
 }
 
 // ReaderContains asserts that reader does NOT contain the specified substring or element.
 func (a *Assertions) ReaderNotContains(reader io.Reader, contains interface{}, msgAndArgs ...interface{}) bool {
-	return ReaderNotContains(a.t, reader, contains, msgAndArgs)
+	return ReaderNotContains(a.t, reader, contains, msgAndArgs...)
 }
