@@ -1,13 +1,13 @@
 package assert
 
 // Assertions provides assertion methods around the
-// TestingT interface.
+// Testing interface.
 type Assertions struct {
-	t TestingT
+	t Testing
 }
 
-// New makes a new Assertions object for the specified TestingT.
-func New(t TestingT) *Assertions {
+// New makes a new Assertions object for the specified Testing.
+func New(t Testing) *Assertions {
 	return &Assertions{
 		t: t,
 	}

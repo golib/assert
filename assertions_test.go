@@ -98,48 +98,48 @@ func (a *AssertionTesterConformingObject) TestMethod() {
 type AssertionTesterNonConformingObject struct {
 }
 
-func TestObjectsAreEqual(t *testing.T) {
+func TestAreEqualObjects(t *testing.T) {
 
-	if !ObjectsAreEqual("Hello World", "Hello World") {
+	if !AreEqualObjects("Hello World", "Hello World") {
 		t.Error("objectsAreEqual should return true")
 	}
-	if !ObjectsAreEqual(123, 123) {
+	if !AreEqualObjects(123, 123) {
 		t.Error("objectsAreEqual should return true")
 	}
-	if !ObjectsAreEqual(123.5, 123.5) {
+	if !AreEqualObjects(123.5, 123.5) {
 		t.Error("objectsAreEqual should return true")
 	}
-	if !ObjectsAreEqual([]byte("Hello World"), []byte("Hello World")) {
+	if !AreEqualObjects([]byte("Hello World"), []byte("Hello World")) {
 		t.Error("objectsAreEqual should return true")
 	}
-	if !ObjectsAreEqual(nil, nil) {
+	if !AreEqualObjects(nil, nil) {
 		t.Error("objectsAreEqual should return true")
 	}
-	if ObjectsAreEqual(map[int]int{5: 10}, map[int]int{10: 20}) {
+	if AreEqualObjects(map[int]int{5: 10}, map[int]int{10: 20}) {
 		t.Error("objectsAreEqual should return false")
 	}
-	if ObjectsAreEqual('x', "x") {
+	if AreEqualObjects('x', "x") {
 		t.Error("objectsAreEqual should return false")
 	}
-	if ObjectsAreEqual("x", 'x') {
+	if AreEqualObjects("x", 'x') {
 		t.Error("objectsAreEqual should return false")
 	}
-	if ObjectsAreEqual(0, 0.1) {
+	if AreEqualObjects(0, 0.1) {
 		t.Error("objectsAreEqual should return false")
 	}
-	if ObjectsAreEqual(0.1, 0) {
+	if AreEqualObjects(0.1, 0) {
 		t.Error("objectsAreEqual should return false")
 	}
-	if ObjectsAreEqual(uint32(10), int32(10)) {
+	if AreEqualObjects(uint32(10), int32(10)) {
 		t.Error("objectsAreEqual should return false")
 	}
-	if !ObjectsAreEqualValues(uint32(10), int32(10)) {
-		t.Error("ObjectsAreEqualValues should return true")
+	if !AreEqualValues(uint32(10), int32(10)) {
+		t.Error("AreEqualValues should return true")
 	}
-	if ObjectsAreEqualValues(0, nil) {
+	if AreEqualValues(0, nil) {
 		t.Fail()
 	}
-	if ObjectsAreEqualValues(nil, 0) {
+	if AreEqualValues(nil, 0) {
 		t.Fail()
 	}
 
@@ -205,7 +205,7 @@ func TestEqual(t *testing.T) {
 	}
 }
 
-// bufferT implements TestingT. Its implementation of Errorf writes the output that would be produced by
+// bufferT implements Testing. Its implementation of Errorf writes the output that would be produced by
 // testing.T.Errorf to an internal bytes.Buffer.
 type bufferT struct {
 	buf bytes.Buffer
@@ -247,21 +247,21 @@ func (t *bufferT) Errorf(format string, args ...interface{}) {
 	t.buf.WriteString(decorate(fmt.Sprintf(format, args...)))
 }
 
-func TestEqualFormatting(t *testing.T) {
-	for i, currCase := range []struct {
-		equalWant  string
-		equalGot   string
-		msgAndArgs []interface{}
-		want       string
-	}{
-		{equalWant: "want", equalGot: "got", want: "\tassertions.go:[0-9]+: \r                          \r\tError Trace:\t\n\t\t\r\tError:      \tNot equal: \n\t\t\r\t            \texpected: \"want\"\n\t\t\r\t            \treceived: \"got\"\n"},
-		{equalWant: "want", equalGot: "got", msgAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tassertions.go:[0-9]+: \r                          \r\tError Trace:\t\n\t\t\r\tError:      \tNot equal: \n\t\t\r\t            \texpected: \"want\"\n\t\t\r\t            \treceived: \"got\"\n\t\t\r\tMessages:   \thello, world!\n"},
-	} {
-		mockT := &bufferT{}
-		Equal(mockT, currCase.equalWant, currCase.equalGot, currCase.msgAndArgs...)
-		Regexp(t, regexp.MustCompile(currCase.want), mockT.buf.String(), "Case %d", i)
-	}
-}
+// func TestEqualFormatting(t *testing.T) {
+// 	for i, currCase := range []struct {
+// 		equalWant     string
+// 		equalGot      string
+// 		formatAndArgs []interface{}
+// 		want          string
+// 	}{
+// 		{equalWant: "want", equalGot: "got", want: "\tassertions.go:[0-9]+: \r                          \r\tError Trace:\t\n\t\t\r\tError:      \tNot equal: \n\t\t\r\t            \texpected: \"want\"\n\t\t\r\t            \treceived: \"got\"\n"},
+// 		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tassertions.go:[0-9]+: \r                          \r\tError Trace:\t\n\t\t\r\tError:      \tNot equal: \n\t\t\r\t            \texpected: \"want\"\n\t\t\r\t            \treceived: \"got\"\n\t\t\r\tMessages:   \thello, world!\n"},
+// 	} {
+// 		mockT := &bufferT{}
+// 		Equal(mockT, currCase.equalWant, currCase.equalGot, currCase.formatAndArgs...)
+// 		Match(t, regexp.MustCompile(currCase.want), mockT.buf.String(), "Case %d", i)
+// 	}
+// }
 
 func TestFormatUnequalValues(t *testing.T) {
 	expected, actual := formatUnequalValues("foo", "bar")
@@ -630,7 +630,7 @@ func TestNoError(t *testing.T) {
 	}()
 
 	if err == nil { // err is not nil here!
-		t.Errorf("Error should be nil due to empty interface", err)
+		t.Errorf("Error(%T) should be nil due to empty interface", err)
 	}
 
 	False(t, NoError(mockT, err), "NoError should fail with empty error interface")
@@ -664,7 +664,7 @@ func TestError(t *testing.T) {
 	}()
 
 	if err == nil { // err is not nil here!
-		t.Errorf("Error should be nil due to empty interface", err)
+		t.Errorf("Error(%T) should be nil due to empty interface", err)
 	}
 
 	True(t, Error(mockT, err), "Error should pass with empty error interface")
@@ -772,9 +772,9 @@ func Test_getLen(t *testing.T) {
 		struct{}{},
 	}
 	for _, v := range falseCases {
-		ok, l := getLen(v)
+		n, ok := getLen(v)
+		Equal(t, 0, n, "getLen should return 0 for %#v", v)
 		False(t, ok, "Expected getLen fail to get length of %#v", v)
-		Equal(t, 0, l, "getLen should return 0 for %#v", v)
 	}
 
 	ch := make(chan int, 5)
@@ -783,7 +783,7 @@ func Test_getLen(t *testing.T) {
 	ch <- 3
 	trueCases := []struct {
 		v interface{}
-		l int
+		n int
 	}{
 		{[]int{1, 2, 3}, 3},
 		{[...]int{1, 2, 3}, 3},
@@ -801,9 +801,9 @@ func Test_getLen(t *testing.T) {
 	}
 
 	for _, c := range trueCases {
-		ok, l := getLen(c.v)
+		n, ok := getLen(c.v)
+		Equal(t, c.n, n)
 		True(t, ok, "Expected getLen success to get length of %#v", c.v)
-		Equal(t, c.l, l)
 	}
 }
 
@@ -1002,7 +1002,7 @@ func TestInEpsilonSlice(t *testing.T) {
 	False(t, InEpsilonSlice(mockT, "", nil, 1), "Expected non numeral slices to fail")
 }
 
-func TestRegexp(t *testing.T) {
+func TestMatch(t *testing.T) {
 	mockT := new(testing.T)
 
 	cases := []struct {
@@ -1014,10 +1014,10 @@ func TestRegexp(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		True(t, Regexp(mockT, tc.rx, tc.str))
-		True(t, Regexp(mockT, regexp.MustCompile(tc.rx), tc.str))
-		False(t, NotRegexp(mockT, tc.rx, tc.str))
-		False(t, NotRegexp(mockT, regexp.MustCompile(tc.rx), tc.str))
+		True(t, Match(mockT, tc.rx, tc.str))
+		True(t, Match(mockT, regexp.MustCompile(tc.rx), tc.str))
+		False(t, NotMatch(mockT, tc.rx, tc.str))
+		False(t, NotMatch(mockT, regexp.MustCompile(tc.rx), tc.str))
 	}
 
 	cases = []struct {
@@ -1029,10 +1029,10 @@ func TestRegexp(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		False(t, Regexp(mockT, tc.rx, tc.str), "Expected \"%s\" to not match \"%s\"", tc.rx, tc.str)
-		False(t, Regexp(mockT, regexp.MustCompile(tc.rx), tc.str))
-		True(t, NotRegexp(mockT, tc.rx, tc.str))
-		True(t, NotRegexp(mockT, regexp.MustCompile(tc.rx), tc.str))
+		False(t, Match(mockT, tc.rx, tc.str), "Expected \"%s\" to not match \"%s\"", tc.rx, tc.str)
+		False(t, Match(mockT, regexp.MustCompile(tc.rx), tc.str))
+		True(t, NotMatch(mockT, tc.rx, tc.str))
+		True(t, NotMatch(mockT, regexp.MustCompile(tc.rx), tc.str))
 	}
 }
 
@@ -1041,7 +1041,7 @@ func testAutogeneratedFunction() {
 		if err := recover(); err == nil {
 			panic("did not panic")
 		}
-		CallerInfo()
+		StackTraces()
 	}()
 	t := struct {
 		io.Closer
@@ -1051,7 +1051,7 @@ func testAutogeneratedFunction() {
 	c.Close()
 }
 
-func TestCallerInfoWithAutogeneratedFunctions(t *testing.T) {
+func TestStackTracesWithAutogeneratedFunctions(t *testing.T) {
 	NotPanics(t, func() {
 		testAutogeneratedFunction()
 	})
@@ -1081,55 +1081,55 @@ func TestNotZero(t *testing.T) {
 	}
 }
 
-func TestJSONEq_EqualSONString(t *testing.T) {
+func TestJSONEqual_EqualSONString(t *testing.T) {
 	mockT := new(testing.T)
-	True(t, JSONEq(mockT, `{"hello": "world", "foo": "bar"}`, `{"hello": "world", "foo": "bar"}`))
+	True(t, JSONEqual(mockT, `{"hello": "world", "foo": "bar"}`, `{"hello": "world", "foo": "bar"}`))
 }
 
-func TestJSONEq_EquivalentButNotEqual(t *testing.T) {
+func TestJSONEqual_EquivalentButNotEqual(t *testing.T) {
 	mockT := new(testing.T)
-	True(t, JSONEq(mockT, `{"hello": "world", "foo": "bar"}`, `{"foo": "bar", "hello": "world"}`))
+	True(t, JSONEqual(mockT, `{"hello": "world", "foo": "bar"}`, `{"foo": "bar", "hello": "world"}`))
 }
 
-func TestJSONEq_HashOfArraysAndHashes(t *testing.T) {
+func TestJSONEqual_HashOfArraysAndHashes(t *testing.T) {
 	mockT := new(testing.T)
-	True(t, JSONEq(mockT, "{\r\n\t\"numeric\": 1.5,\r\n\t\"array\": [{\"foo\": \"bar\"}, 1, \"string\", [\"nested\", \"array\", 5.5]],\r\n\t\"hash\": {\"nested\": \"hash\", \"nested_slice\": [\"this\", \"is\", \"nested\"]},\r\n\t\"string\": \"foo\"\r\n}",
+	True(t, JSONEqual(mockT, "{\r\n\t\"numeric\": 1.5,\r\n\t\"array\": [{\"foo\": \"bar\"}, 1, \"string\", [\"nested\", \"array\", 5.5]],\r\n\t\"hash\": {\"nested\": \"hash\", \"nested_slice\": [\"this\", \"is\", \"nested\"]},\r\n\t\"string\": \"foo\"\r\n}",
 		"{\r\n\t\"numeric\": 1.5,\r\n\t\"hash\": {\"nested\": \"hash\", \"nested_slice\": [\"this\", \"is\", \"nested\"]},\r\n\t\"string\": \"foo\",\r\n\t\"array\": [{\"foo\": \"bar\"}, 1, \"string\", [\"nested\", \"array\", 5.5]]\r\n}"))
 }
 
-func TestJSONEq_Array(t *testing.T) {
+func TestJSONEqual_Array(t *testing.T) {
 	mockT := new(testing.T)
-	True(t, JSONEq(mockT, `["foo", {"hello": "world", "nested": "hash"}]`, `["foo", {"nested": "hash", "hello": "world"}]`))
+	True(t, JSONEqual(mockT, `["foo", {"hello": "world", "nested": "hash"}]`, `["foo", {"nested": "hash", "hello": "world"}]`))
 }
 
-func TestJSONEq_HashAndArrayNotEquivalent(t *testing.T) {
+func TestJSONEqual_HashAndArrayNotEquivalent(t *testing.T) {
 	mockT := new(testing.T)
-	False(t, JSONEq(mockT, `["foo", {"hello": "world", "nested": "hash"}]`, `{"foo": "bar", {"nested": "hash", "hello": "world"}}`))
+	False(t, JSONEqual(mockT, `["foo", {"hello": "world", "nested": "hash"}]`, `{"foo": "bar", {"nested": "hash", "hello": "world"}}`))
 }
 
-func TestJSONEq_HashesNotEquivalent(t *testing.T) {
+func TestJSONEqual_HashesNotEquivalent(t *testing.T) {
 	mockT := new(testing.T)
-	False(t, JSONEq(mockT, `{"foo": "bar"}`, `{"foo": "bar", "hello": "world"}`))
+	False(t, JSONEqual(mockT, `{"foo": "bar"}`, `{"foo": "bar", "hello": "world"}`))
 }
 
-func TestJSONEq_ActualIsNotJSON(t *testing.T) {
+func TestJSONEqual_ActualIsNotJSON(t *testing.T) {
 	mockT := new(testing.T)
-	False(t, JSONEq(mockT, `{"foo": "bar"}`, "Not JSON"))
+	False(t, JSONEqual(mockT, `{"foo": "bar"}`, "Not JSON"))
 }
 
-func TestJSONEq_ExpectedIsNotJSON(t *testing.T) {
+func TestJSONEqual_ExpectedIsNotJSON(t *testing.T) {
 	mockT := new(testing.T)
-	False(t, JSONEq(mockT, "Not JSON", `{"foo": "bar", "hello": "world"}`))
+	False(t, JSONEqual(mockT, "Not JSON", `{"foo": "bar", "hello": "world"}`))
 }
 
-func TestJSONEq_ExpectedAndActualNotJSON(t *testing.T) {
+func TestJSONEqual_ExpectedAndActualNotJSON(t *testing.T) {
 	mockT := new(testing.T)
-	False(t, JSONEq(mockT, "Not JSON", "Not JSON"))
+	False(t, JSONEqual(mockT, "Not JSON", "Not JSON"))
 }
 
-func TestJSONEq_ArraysOfDifferentOrder(t *testing.T) {
+func TestJSONEqual_ArraysOfDifferentOrder(t *testing.T) {
 	mockT := new(testing.T)
-	False(t, JSONEq(mockT, `["foo", {"hello": "world", "nested": "hash"}]`, `[{ "hello": "world", "nested": "hash"}, "foo"]`))
+	False(t, JSONEqual(mockT, `["foo", {"hello": "world", "nested": "hash"}]`, `[{ "hello": "world", "nested": "hash"}, "foo"]`))
 }
 
 func TestDiff(t *testing.T) {
@@ -1256,28 +1256,28 @@ func TestDiffRace(t *testing.T) {
 	}
 }
 
-type mockTestingT struct {
+type mockTesting struct {
 }
 
-func (m *mockTestingT) Errorf(format string, args ...interface{}) {}
+func (m *mockTesting) Errorf(format string, args ...interface{}) {}
 
-func TestFailNowWithPlainTestingT(t *testing.T) {
-	mockT := &mockTestingT{}
+func TestFailNowWithPlainTesting(t *testing.T) {
+	mockT := &mockTesting{}
 
 	Panics(t, func() {
 		FailNow(mockT, "failed")
 	}, "should panic since mockT is missing FailNow()")
 }
 
-type mockFailNowTestingT struct {
+type mockFailNowTesting struct {
 }
 
-func (m *mockFailNowTestingT) Errorf(format string, args ...interface{}) {}
+func (m *mockFailNowTesting) Errorf(format string, args ...interface{}) {}
 
-func (m *mockFailNowTestingT) FailNow() {}
+func (m *mockFailNowTesting) FailNow() {}
 
-func TestFailNowWithFullTestingT(t *testing.T) {
-	mockT := &mockFailNowTestingT{}
+func TestFailNowWithFullTesting(t *testing.T) {
+	mockT := &mockFailNowTesting{}
 
 	NotPanics(t, func() {
 		FailNow(mockT, "failed")
