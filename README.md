@@ -1,19 +1,18 @@
 ## assert
 
-[![Build Status](https://travis-ci.org/golib/assert.svg?branch=master)](https://travis-ci.org/golib/assert)
+[![CircleCI](https://circleci.com/gh/golib/assert/tree/master.svg?style=svg)](https://circleci.com/gh/golib/assert/tree/master) [![Coverage](http://gocover.io/_badge/github.com/golib/assert?0)](http://gocover.io/github.com/golib/assert) [![GoDoc](https://godoc.org/github.com/golib/assert?status.svg)](http://godoc.org/github.com/golib/assert)
 
-> golang assertion lib copied from [testify](https://github.com/stretchr/testify)
+> golang assert helpers modified from [testify](https://github.com/stretchr/testify)
 
-Assertions allow you to easily write test code, and are global funcs in the `assert` package.
-All assertion functions take, as the first argument, the `*testing.T` object provided by the
+Assertions allow you to easily write testing codes, and are global funcs in the `assert` package.
+All assertion funcs take, as the first argument, the `*testing.T` object provided by the
 testing framework. This allows the assertion funcs to write the failings and other details to
 the correct place.
 
-Every assertion function also takes an optional string message as the final argument,
+Every assertion func also takes an optional string message as the final argument,
 allowing custom error messages to be appended to the message the assertion method outputs.
 
-
-### Usage
+### Basic Usage
 
 ```go
 import (
@@ -23,19 +22,34 @@ import (
 )
 
 func TestSomething(t *testing.T) {
-    var a string = "Hello"
-    var b string = "Hello"
+    var (
+        a string = "Hello"
+        b string = "Hello"
+    )
 
     assert.Equal(t, a, b, "The two words should be the same.")
 }
+```
+
+### Advanced Usage
+```go
+import (
+    "testing"
+    "net/http"
+
+    "github.com/golib/assert"
+)
 
 // if you assert many times, use the format below:
 func TestSomething(t *testing.T) {
-    assertion := assert.New(t)
+    it := assert.New(t)
 
-    var a string = "Hello"
-    var b string = "Hello"
-
-    assertion.Equal(a, b, "The two words should be the same.")
+    req, err := http.NewRequest(http.MethodGet, "https://example.com", nil)
+    if it.Nil(err) {
+        resp, err := http.DefaultClient.Do(req)
+        if it.Nil(err) {
+            it.Equal("HIT", resp.Header().Get("x-cache"))
+        }
+    }
 }
 ```
