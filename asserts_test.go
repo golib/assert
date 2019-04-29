@@ -502,8 +502,8 @@ func Test_EqualFormatting(t *testing.T) {
 		formatAndArgs []interface{}
 		want          string
 	}{
-		{equalWant: "want", equalGot: "got", want: "Error:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \tDiff:\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\n"},
-		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "Error:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \tDiff:\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\tMessages:    \thello, world!\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", want: "\tasserts.go:167: \r                        \r\t\n\t\tError Trace:\tassert.Test_EqualFormatting:509\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tasserts.go:167: \r                        \r\t\n\t\tError Trace:\tassert.Test_EqualFormatting:509\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\r\tMessages:    \thello, world!\n\t\t\n"},
 	} {
 		mockT := &bufferT{}
 		Equal(mockT, currCase.equalWant, currCase.equalGot, currCase.formatAndArgs...)
@@ -1238,12 +1238,13 @@ func TestEqualJSON_ArraysOfDifferentOrder(t *testing.T) {
 func TestDiff(t *testing.T) {
 	expected := `
 
-Diff:
 --- Expected
 +++ Actual
 @@ -1 +1 @@
 -struct { foo string }{foo:"hello"}
 +struct { foo string }{foo:"bar"}
+
+
 `
 	actual := diffValues(
 		struct{ foo string }{"hello"},
@@ -1253,12 +1254,13 @@ Diff:
 
 	expected = `
 
-Diff:
 --- Expected
 +++ Actual
 @@ -1 +1 @@
 -[]int{1, 2, 3, 4}
 +[]int{1, 3, 5, 7}
+
+
 `
 	actual = diffValues(
 		[]int{1, 2, 3, 4},
@@ -1268,12 +1270,13 @@ Diff:
 
 	expected = `
 
-Diff:
 --- Expected
 +++ Actual
 @@ -1 +1 @@
 -[]int{1, 2, 3}
 +[]int{1, 3, 5}
+
+
 `
 	actual = diffValues(
 		[]int{1, 2, 3, 4}[0:3],
@@ -1281,22 +1284,23 @@ Diff:
 	)
 	Equal(t, expected, actual)
 
-	// NOTE: map is unsorted!
-	// 	expected = `
-
-	// Diff:
-	// --- Expected
-	// +++ Actual
-	// @@ -1 +1 @@
-	// -map[string]int{"one":1, "two":2, "three":3, "four":4}
-	// +map[string]int{"one":1, "three":3, "five":5, "seven":7}
-	// `
-
-	// 	actual = diffValues(
-	// 		map[string]int{"one": 1, "two": 2, "three": 3, "four": 4},
-	// 		map[string]int{"one": 1, "three": 3, "five": 5, "seven": 7},
-	// 	)
-	// 	Equal(t, expected, actual)
+	//	// NOTE: map is unsorted!
+	//	expected = `
+	//
+	//--- Expected
+	//+++ Actual
+	//@@ -1 +1 @@
+	//-map[string]int{"one":1, "two":2, "three":3, "four":4}
+	//+map[string]int{"one":1, "three":3, "five":5, "seven":7}
+	//
+	//
+	//`
+	//
+	//	actual = diffValues(
+	//		map[string]int{"one": 1, "two": 2, "three": 3, "four": 4},
+	//		map[string]int{"one": 1, "three": 3, "five": 5, "seven": 7},
+	//	)
+	//	Equal(t, expected, actual)
 }
 
 func TestDiffEmptyCases(t *testing.T) {

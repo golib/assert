@@ -67,7 +67,7 @@ func StackTraces() []string {
 		ok   bool
 	)
 
-	callers := []string{}
+	var callers []string
 	for i := 0; ; i++ {
 		pc, file, line, ok = runtime.Caller(i)
 
@@ -232,7 +232,7 @@ func labeledOutput(content ...labeledContent) string {
 }
 
 // getWhitespaceString returns a string that is long enough to overwrite the default
-// output from the go teting framework.
+// output from the go testing framework.
 func getWhitespaceString() string {
 	_, file, line, ok := runtime.Caller(3)
 	if !ok {
@@ -388,7 +388,7 @@ func toFloat(x interface{}) (float64, bool) {
 func diffValues(expected, actual interface{}) string {
 	expecteds, actuals := prettifyValues(expected, actual)
 
-	diffs, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+	diffs, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 		A:        difflib.SplitLines(expecteds),
 		B:        difflib.SplitLines(actuals),
 		FromFile: "Expected",
@@ -398,11 +398,16 @@ func diffValues(expected, actual interface{}) string {
 		Context:  1,
 	})
 
-	if len(diffs) == 0 {
-		return ""
+	if err != nil || len(diffs) == 0 {
+		diffs := pretty.Diff(expected, actual)
+		if len(diffs) == 0 {
+			return ""
+		}
+
+		return fmt.Sprintf("\n\n%v\n\n", diffs)
 	}
 
-	return "\n\nDiff:\n" + diffs
+	return fmt.Sprintf("\n\n%s\n\n", diffs)
 }
 
 // panicRecovery returns true if the function passed to it panics. Otherwise, it returns false.

@@ -663,67 +663,68 @@ func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
 		return false
 	}
 
-	switch value.(type) {
-	case []byte:
-		expected := string(value.([]byte))
+	jsonvalue := string(data)
 
-		return EqualValues(t, expected, actual, "Expected contains json key "+key+" of value "+expected+", but got "+actual+".")
+	switch expected := value.(type) {
+	case []byte:
+		return EqualValues(t, expected, data,
+			"Expected contains json key %q of byte: %s, but got: %s", key, expected, data)
 
 	case string:
-		expected := value.(string)
-
-		return EqualValues(t, expected, actual, "Expected contains json key "+key+" of value "+expected+", but got "+actual+".")
+		return EqualValues(t, expected, jsonvalue,
+			"Expected contains json key %q of string: %s, but got: %s", key, expected, data)
 
 	case int8:
-		expected := int(value.(int8))
-		actualInt, _ := strconv.Atoi(actual)
+		actval, _ := strconv.Atoi(jsonvalue)
 
-		return EqualValues(t, expected, actualInt, "Expected contains json key "+key+" of value "+strconv.Itoa(expected)+", but got "+actual+".")
+		return EqualValues(t, expected, int8(actval),
+			"Expected contains json key %q of int8: %v, but got: %s", key, expected, data)
 
 	case int:
-		expected := value.(int)
-		actualInt, _ := strconv.Atoi(actual)
+		actval, _ := strconv.Atoi(jsonvalue)
 
-		return EqualValues(t, expected, actualInt, "Expected contains json key "+key+" of value "+strconv.Itoa(expected)+", but got "+actual+".")
+		return EqualValues(t, expected, int(actval),
+			"Expected contains json key %q of int: %v, but got: %s", key, expected, data)
 
 	case int16:
-		expected := int64(value.(int16))
-		actualInt, _ := strconv.ParseInt(actual, 10, 16)
+		actval, _ := strconv.ParseInt(jsonvalue, 10, 16)
 
-		return EqualValues(t, expected, actualInt, "Expected contains json key "+key+" of value "+strconv.FormatInt(expected, 10)+", but got "+actual+".")
+		return EqualValues(t, expected, int16(actval),
+			"Expected contains json key %q of int16: %v, but got %s", key, expected, data)
 
 	case int32:
-		expected := int64(value.(int32))
-		actualInt, _ := strconv.ParseInt(actual, 10, 32)
+		actval, _ := strconv.ParseInt(jsonvalue, 10, 32)
 
-		return EqualValues(t, expected, actualInt, "Expected contains json key "+key+" of value "+strconv.FormatInt(expected, 10)+", but got "+actual+".")
+		return EqualValues(t, expected, int32(actval),
+			"Expected contains json key %q of int32: %v, but got: %s", key, expected, data)
 
 	case int64:
-		expected := value.(int64)
-		actualInt, _ := strconv.ParseInt(actual, 10, 64)
+		actval, _ := strconv.ParseInt(jsonvalue, 10, 64)
 
-		return EqualValues(t, expected, actualInt, "Expected contains json key "+key+" of value "+strconv.FormatInt(expected, 10)+", but got "+actual+".")
+		return EqualValues(t, expected, actval,
+			"Expected contains json key %q of int64: %v, but got: %s", key, expected, data)
 
 	case float32:
-		expected := float64(value.(float32))
-		actualInt, _ := strconv.ParseFloat(actual, 32)
-		return EqualValues(t, expected, actualInt, "Expected contains json key "+key+" of value "+strconv.FormatFloat(expected, 'f', 5, 32)+", but got "+actual+".")
+		actval, _ := strconv.ParseFloat(jsonvalue, 32)
+
+		return EqualValues(t, expected, float32(actval),
+			"Expected contains json key %q of float32: %v, but got: %v", key, expected, data)
 
 	case float64:
-		expected := value.(float64)
-		actualInt, _ := strconv.ParseFloat(actual, 64)
+		actval, _ := strconv.ParseFloat(jsonvalue, 64)
 
-		return EqualValues(t, expected, actualInt, "Expected contains json key "+key+" of value "+strconv.FormatFloat(expected, 'f', 5, 64)+", but got "+actual+".")
+		return EqualValues(t, expected, actval,
+			"Expected contains json key %q of float64: %v, but got: %v", key, expected, data)
 
 	case bool:
-		expected := value.(bool)
-
-		switch actual {
-		case "true", "True", "1", "on":
-			return True(t, expected, "Expected contains json key "+key+" of value [true|True|1|on], but got "+actual+".")
+		switch strings.ToLower(jsonvalue) {
+		case "true", "1", "on":
+			return True(t, expected,
+				"Expected contains json key %q of [true|1|on], but got: %s", data)
 
 		default:
-			return False(t, expected, "Expected contains json key "+key+" of value [false|False|0|off], but got "+actual+".")
+			return False(t, expected,
+				"Expected contains json key %q of [false|0|off], but got: %s", data)
 		}
 	}
 
@@ -772,7 +773,7 @@ func NotContainsJSON(t Testing, actual, key string) bool {
 	}
 
 	if err == nil {
-		t.Errorf("Expected does not contain json key %s, but got %s", key, string(buf))
+		t.Errorf("Expected does not contain json key %q, but got: %s", key, buf)
 
 		return false
 	}
