@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dolab/types"
-
 	"github.com/buger/jsonparser"
+	"github.com/dolab/types"
+	"github.com/kr/pretty"
 )
 
 var (
@@ -44,7 +44,7 @@ func Nil(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 		return true
 	}
 
-	return Fail(t, fmt.Sprintf("Expected to be nil, but got: %+v", v), formatAndArgs...)
+	return Fail(t, pretty.Sprintf("Expected to be nil, but got: %# v", v), formatAndArgs...)
 }
 
 // NotNil asserts that the v is not nil.
@@ -64,7 +64,7 @@ func NotNil(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 func Zero(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	if v != nil && !reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface()) {
 		return Fail(t,
-			fmt.Sprintf("Should be zero, but got: %#v", v),
+			pretty.Sprintf("Should be zero, but got: %# v", v),
 			formatAndArgs...)
 	}
 
@@ -75,7 +75,7 @@ func Zero(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 func NotZero(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	if v == nil || reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface()) {
 		return Fail(t,
-			fmt.Sprintf("Should NOT be zero, but got: %#v", v),
+			pretty.Sprintf("Should NOT be zero, but got: %# v", v),
 			formatAndArgs...)
 	}
 
@@ -95,7 +95,7 @@ func True(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	}
 
 	if tv != true {
-		return Fail(t, fmt.Sprintf("Expected %+v to be true", v), formatAndArgs...)
+		return Fail(t, pretty.Sprintf("Expected %# v to be true", v), formatAndArgs...)
 	}
 
 	return true
@@ -114,7 +114,7 @@ func False(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	}
 
 	if fv != false {
-		return Fail(t, fmt.Sprintf("Expected %+v to be false", v), formatAndArgs...)
+		return Fail(t, pretty.Sprintf("Expected %# v to be false", v), formatAndArgs...)
 	}
 
 	return true
@@ -243,7 +243,7 @@ func Exactly(t Testing, expected, actual interface{}, formatAndArgs ...interface
 func Empty(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	if !types.IsEmpty(v) {
 		return Fail(t,
-			fmt.Sprintf("Expected to be empty, but got: %+v", v),
+			pretty.Sprintf("Expected to be empty, but got: %# v", v),
 			formatAndArgs...)
 	}
 
@@ -261,7 +261,7 @@ func Empty(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 func NotEmpty(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	if types.IsEmpty(v) {
 		return Fail(t,
-			fmt.Sprintf("Expected not to be empty, but got: %+v", v),
+			pretty.Sprintf("Expected not to be empty, but got: %# v", v),
 			formatAndArgs...)
 	}
 
@@ -280,13 +280,13 @@ func Contains(t Testing, list, v interface{}, formatAndArgs ...interface{}) bool
 	ok, found := includeElement(list, v)
 	if !ok {
 		return Fail(t,
-			fmt.Sprintf("Could not apply len() with %+v", v),
+			pretty.Sprintf("Could not apply len() with %# v", v),
 			formatAndArgs...)
 	}
 
 	if !found {
 		return Fail(t,
-			fmt.Sprintf("%+v does not contain %v", list, v),
+			pretty.Sprintf("%# v does not contain `%v`", list, v),
 			formatAndArgs...)
 	}
 
@@ -305,13 +305,13 @@ func NotContains(t Testing, list, v interface{}, formatAndArgs ...interface{}) b
 	ok, found := includeElement(list, v)
 	if !ok {
 		return Fail(t,
-			fmt.Sprintf("Could not apply len() with `%+v`", v),
+			pretty.Sprintf("Could not apply len() with %# v", v),
 			formatAndArgs...)
 	}
 
 	if found {
 		return Fail(t,
-			fmt.Sprintf("`%+v` does not contain %v", list, v),
+			pretty.Sprintf("%# v contains `%v`", list, v),
 			formatAndArgs...)
 	}
 
@@ -373,13 +373,13 @@ func Len(t Testing, v interface{}, length int, formatAndArgs ...interface{}) boo
 	n, ok := getLen(v)
 	if !ok {
 		return Fail(t,
-			fmt.Sprintf("Could not apply len() with `%+v`", v),
+			pretty.Sprintf("Could not apply len() with %# v", v),
 			formatAndArgs...)
 	}
 
 	if n != length {
 		return Fail(t,
-			fmt.Sprintf("Expected value should have %d item(s), but got: %d item(s)", length, n),
+			pretty.Sprintf("Expected %# v should have %d item(s), but got: %d item(s)", v, length, n),
 			formatAndArgs...)
 	}
 
@@ -398,7 +398,7 @@ func Error(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	err, ok := v.(error)
 	if !ok || err == nil {
 		return Fail(t,
-			fmt.Sprintf("Expected value is an error, but got: %+v", v),
+			pretty.Sprintf("Expected value is an error, but got: %# v", v),
 			formatAndArgs...)
 	}
 
@@ -417,7 +417,7 @@ func NotError(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 	err, ok := v.(error)
 	if ok && err != nil {
 		return Fail(t,
-			fmt.Sprintf("Expected valus is NOT an error, but got: %+v", err),
+			pretty.Sprintf("Expected valus is NOT an error, but got: %# v", err),
 			formatAndArgs...)
 	}
 
@@ -445,7 +445,7 @@ func EqualErrors(t Testing, expected, actual interface{}, formatAndArgs ...inter
 // Panics asserts that the code inside the specified PanicTestFunc panics.
 //
 //   assert.Panics(t, func(){
-//     panice("Oops~")
+//     panic("Oops~")
 //   }, "Calling should panic")
 //
 // Returns whether the assertion was successful (true) or not (false).
@@ -645,9 +645,9 @@ func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
 		}
 
 		var i int64
-		jsonparser.ArrayEach(buf, func(arrBuf []byte, arrType jsonparser.ValueType, arrOffset int, arrErr error) {
+		_, err = jsonparser.ArrayEach(buf, func(arrBuf []byte, arrType jsonparser.ValueType, arrOffset int, arrErr error) {
 			if i == n {
-				buf = arrBuf
+				data = arrBuf
 				err = arrErr
 			}
 
@@ -759,9 +759,9 @@ func NotContainsJSON(t Testing, actual, key string) bool {
 		}
 
 		var i int64
-		jsonparser.ArrayEach(buf, func(arrBuf []byte, arrType jsonparser.ValueType, arrOffset int, arrErr error) {
+		_, err = jsonparser.ArrayEach(buf, func(arrBuf []byte, arrType jsonparser.ValueType, arrOffset int, arrErr error) {
 			if i == n {
-				buf = arrBuf
+				data = arrBuf
 				err = arrErr
 			}
 
