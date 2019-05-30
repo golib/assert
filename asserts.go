@@ -648,6 +648,7 @@ func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
 		_, err = jsonparser.ArrayEach(buf, func(arrBuf []byte, arrType jsonparser.ValueType, arrOffset int, arrErr error) {
 			if i == n {
 				data = arrBuf
+				buf = data
 				err = arrErr
 			}
 
@@ -762,6 +763,7 @@ func NotContainsJSON(t Testing, actual, key string) bool {
 		_, err = jsonparser.ArrayEach(buf, func(arrBuf []byte, arrType jsonparser.ValueType, arrOffset int, arrErr error) {
 			if i == n {
 				data = arrBuf
+				buf = data
 				err = arrErr
 			}
 

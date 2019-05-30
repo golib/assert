@@ -1399,13 +1399,17 @@ func TestReaderNotContains(t *testing.T) {
 func TestContainsJSON(t *testing.T) {
 	mockT := new(testing.T)
 
-	jsonstr := `{"name":"testing","items":["one", 2],"status":true}`
+	jsonstr := `{"name":"testing","items":["one", 2, {"three":3}],"status":true}`
 
 	if !ContainsJSON(mockT, jsonstr, "name", "testing") {
 		t.Error("ContainsJSON should return true")
 	}
 
 	if !ContainsJSON(mockT, jsonstr, "items.0", "one") {
+		t.Error("ContainsJSON should return true")
+	}
+
+	if !ContainsJSON(mockT, jsonstr, "items.2.three", 3) {
 		t.Error("ContainsJSON should return true")
 	}
 
