@@ -1395,3 +1395,25 @@ func TestReaderNotContains(t *testing.T) {
 		t.Error("Contains should return false: \"Hello World\" does not contain \"Salut\"")
 	}
 }
+
+func TestContainsJSON(t *testing.T) {
+	mockT := new(testing.T)
+
+	jsonstr := `{"name":"testing","items":["one", 2],"status":true}`
+
+	if !ContainsJSON(mockT, jsonstr, "name", "testing") {
+		t.Error("ContainsJSON should return true")
+	}
+
+	if !ContainsJSON(mockT, jsonstr, "items.0", "one") {
+		t.Error("ContainsJSON should return true")
+	}
+
+	if !ContainsJSON(mockT, jsonstr, "items.1", 2) {
+		t.Error("ContainsJSON should return true")
+	}
+
+	if !ContainsJSON(mockT, jsonstr, "status", true) {
+		t.Error("ContainsJSON should return true")
+	}
+}
