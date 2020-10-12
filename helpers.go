@@ -37,15 +37,19 @@ func AreEqualValues(expected, actual interface{}) bool {
 		return true
 	}
 
-	actualType := reflect.TypeOf(actual)
-	if actualType == nil {
+	actualValue := reflect.ValueOf(actual)
+	expectedValue := reflect.ValueOf(expected)
+	if !actualValue.IsValid() || !expectedValue.IsValid() {
 		return false
 	}
 
 	// Attempt comparison after type conversion
-	expectedValue := reflect.ValueOf(expected)
-	if expectedValue.IsValid() && expectedValue.Type().ConvertibleTo(actualType) {
-		return reflect.DeepEqual(expectedValue.Convert(actualType).Interface(), actual)
+	if expectedValue.Type().ConvertibleTo(actualValue.Type()) {
+		return reflect.DeepEqual(expectedValue.Convert(actualValue.Type()).Interface(), actual)
+	}
+
+	if actualValue.Type().ConvertibleTo(expectedValue.Type()) {
+		return reflect.DeepEqual(actualValue.Convert(expectedValue.Type()).Interface(), actualValue)
 	}
 
 	return false
@@ -86,6 +90,7 @@ func StackTraces() []string {
 		if f == nil {
 			break
 		}
+
 		name = f.Name()
 
 		// testing.tRunner is the standard library function that calls
@@ -97,15 +102,18 @@ func StackTraces() []string {
 			break
 		}
 
+		// ignore github.com/golib/assert itself
+		if strings.HasPrefix(name, "github.com/golib/assert.") {
+			continue
+		}
+
+		// ignore golang packages
 		paths := strings.Split(name, "/")
 		if len(paths) < 2 {
 			continue
 		}
 
-		if paths[len(paths)-2] != "golib" ||
-			strings.HasPrefix(paths[len(paths)-1], "assert.Test") {
-			callers = append(callers, fmt.Sprintf("%s:%d", paths[len(paths)-1], line))
-		}
+		callers = append(callers, fmt.Sprintf("%s:%d", paths[len(paths)-1], line))
 
 		// Drop the package
 		segments := strings.Split(name, ".")

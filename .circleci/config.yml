@@ -17,43 +17,35 @@ default_steps: &default_steps
     - run: go test -v -timeout 30s github.com/golib/assert
     - run: go test -v -timeout 30s -race github.com/golib/assert
 jobs:
-  go1.6:
-    <<: *defaults
-    docker:
-      # specify the version
-      - image: golang:1.6
-
-    <<: *default_steps
-
-  go1.7:
-    <<: *defaults
-    docker:
-      # specify the version
-      - image: golang:1.7
-
-    <<: *default_steps
-
-  go1.8:
-    <<: *defaults
-    docker:
-      # specify the version
-      - image: circleci/golang:1.8
-
-    <<: *default_steps
-
-  go1.11:
-    <<: *defaults
-    docker:
-      # specify the version
-      - image: circleci/golang:1.11
-
-    <<: *default_steps
-
   go1.12:
     <<: *defaults
     docker:
       # specify the version
       - image: circleci/golang:1.12
+
+    <<: *default_steps
+
+  go1.13:
+    <<: *defaults
+    docker:
+      # specify the version
+      - image: circleci/golang:1.13
+
+    <<: *default_steps
+
+  go1.14:
+    <<: *defaults
+    docker:
+      # specify the version
+      - image: circleci/golang:1.14
+
+    <<: *default_steps
+
+  go1.15:
+    <<: *defaults
+    docker:
+      # specify the version
+      - image: circleci/golang:1.15
 
     <<: *default_steps
 
@@ -69,9 +61,8 @@ workflows:
   version: 2
   testing:
     jobs:
-      # - go1.6
-      # - go1.7
-      # - go1.8
-      - go1.11
       - go1.12
+      - go1.13
+      - go1.14
+      - go1.15
       - latest
