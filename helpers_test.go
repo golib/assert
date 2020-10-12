@@ -1,6 +1,8 @@
 package assert
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_AreEqualObjects(t *testing.T) {
 	// it should work
