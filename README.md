@@ -1,6 +1,6 @@
 ## assert
 
-[![CircleCI](https://circleci.com/gh/golib/assert/tree/master.svg?style=svg)](https://circleci.com/gh/golib/assert/tree/master) [![Coverage](http://gocover.io/_badge/github.com/golib/assert?0)](http://gocover.io/github.com/golib/assert) [![GoDoc](https://godoc.org/github.com/golib/assert?status.svg)](http://godoc.org/github.com/golib/assert)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/golib/assert/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/golib/assert/tree/master)
 
 > golang assert helpers modified from [testify](https://github.com/stretchr/testify)
 
