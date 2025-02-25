@@ -31,7 +31,7 @@ func (it *Assertions) FailNow(message string, formatAndArgs ...interface{}) bool
 
 // IsType asserts that the v is of the same type.
 //
-//    it.IsType(int, 123)
+//	it.IsType(int, 123)
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) IsType(expectedType, v interface{}, formatAndArgs ...interface{}) bool {
@@ -40,7 +40,7 @@ func (it *Assertions) IsType(expectedType, v interface{}, formatAndArgs ...inter
 
 // Implements asserts that the v is implemented by the interface.
 //
-//    it.Implements((*Iface)(nil), new(v))
+//	it.Implements((*Iface)(nil), new(v))
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Implements(iface, v interface{}, formatAndArgs ...interface{}) bool {
@@ -50,9 +50,9 @@ func (it *Assertions) Implements(iface, v interface{}, formatAndArgs ...interfac
 // Contains asserts that the list(string, array, slice...) or map contains the
 // sub string or element.
 //
-//    it.Contains("Hello World", "World", "'Hello World' does contain 'World'")
-//    it.Contains([]string{"Hello", "World"}, "World", "["Hello", "World"] does contain 'World'")
-//    it.Contains(map[string]string{"Hello": "World"}, "Hello", "{'Hello': 'World'} does contain 'Hello'")
+//	it.Contains("Hello World", "World", "'Hello World' does contain 'World'")
+//	it.Contains([]string{"Hello", "World"}, "World", "["Hello", "World"] does contain 'World'")
+//	it.Contains(map[string]string{"Hello": "World"}, "Hello", "{'Hello': 'World'} does contain 'Hello'")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Contains(list, contains interface{}, formatAndArgs ...interface{}) bool {
@@ -62,9 +62,9 @@ func (it *Assertions) Contains(list, contains interface{}, formatAndArgs ...inte
 // NotContains asserts that the list(string, array, slice...) or map does NOT contain the
 // sub string or element.
 //
-//    it.NotContains("Hello World", "Earth", "'Hello World' does NOT contain 'Earth'")
-//    it.NotContains([]string{"Hello", "World", "Earth", "['Hello', 'World'] does NOT contain 'Earth'")
-//    it.NotContains(map[string]string{"Hello": "World"}, "Earth", "{'Hello': 'World'} does NOT contain 'Earth'")
+//	it.NotContains("Hello World", "Earth", "'Hello World' does NOT contain 'Earth'")
+//	it.NotContains([]string{"Hello", "World", "Earth", "['Hello', 'World'] does NOT contain 'Earth'")
+//	it.NotContains(map[string]string{"Hello": "World"}, "Earth", "{'Hello': 'World'} does NOT contain 'Earth'")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotContains(list, contains interface{}, formatAndArgs ...interface{}) bool {
@@ -73,8 +73,8 @@ func (it *Assertions) NotContains(list, contains interface{}, formatAndArgs ...i
 
 // Match asserts that the regexp matches a string.
 //
-//  it.Match(regexp.MustCompile("start"), "it's starting")
-//  it.Match("start...$", "it's not starting")
+//	it.Match(regexp.MustCompile("start"), "it's starting")
+//	it.Match("start...$", "it's not starting")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Match(reg, str interface{}, formatAndArgs ...interface{}) bool {
@@ -83,8 +83,8 @@ func (it *Assertions) Match(reg, str interface{}, formatAndArgs ...interface{}) 
 
 // NotMatch asserts that the regexp does not match a string.
 //
-//  it.NotMatch(regexp.MustCompile("starts"), "it's starting")
-//  it.NotMatch("^start", "it's not starting")
+//	it.NotMatch(regexp.MustCompile("starts"), "it's starting")
+//	it.NotMatch("^start", "it's not starting")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotMatch(reg, str interface{}, formatAndArgs ...interface{}) bool {
@@ -95,7 +95,7 @@ func (it *Assertions) NotMatch(reg, str interface{}, formatAndArgs ...interface{
 // Pointer variable equality is determined based on the equality of the
 // referenced values (as opposed to the memory addresses).
 //
-//    it.Equal(123, 123, "123 and 123 should be equal")
+//	it.Equal(123, 123, "123 and 123 should be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Equal(expected, actual interface{}, formatAndArgs ...interface{}) bool {
@@ -106,7 +106,7 @@ func (it *Assertions) Equal(expected, actual interface{}, formatAndArgs ...inter
 // Pointer variable equality is determined based on the equality of the
 // referenced values (as opposed to the memory addresses).
 //
-//    it.NotEqual(123, "123", "two objects shouldn't be equal")
+//	it.NotEqual(123, "123", "two objects shouldn't be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotEqual(expected, actual interface{}, formatAndArgs ...interface{}) bool {
@@ -116,7 +116,7 @@ func (it *Assertions) NotEqual(expected, actual interface{}, formatAndArgs ...in
 // EqualValues asserts that two objects are equal
 // or convertable to the same types and equal.
 //
-//    it.EqualValues(uint32(123), int32(123), "123 and 123 should be equal")
+//	it.EqualValues(uint32(123), int32(123), "123 and 123 should be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) EqualValues(expected, actual interface{}, formatAndArgs ...interface{}) bool {
@@ -125,7 +125,7 @@ func (it *Assertions) EqualValues(expected, actual interface{}, formatAndArgs ..
 
 // Exactly asserts that two objects are equal in both values and types.
 //
-//    it.Exactly(int32(123), int64(123), "int32 and int64 should NOT be equal")
+//	it.Exactly(int32(123), int64(123), "int32 and int64 should NOT be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Exactly(expected, actual interface{}, formatAndArgs ...interface{}) bool {
@@ -140,7 +140,7 @@ func (it *Assertions) Condition(comp Comparison, formatAndArgs ...interface{}) b
 // Empty asserts that the v is empty.  I.e. nil, "", false, 0,
 // or list(slice, map, channel) with len == 0.
 //
-//  it.Empty(v)
+//	it.Empty(v)
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Empty(v interface{}, formatAndArgs ...interface{}) bool {
@@ -150,9 +150,9 @@ func (it *Assertions) Empty(v interface{}, formatAndArgs ...interface{}) bool {
 // NotEmpty asserts that the v is NOT empty.  I.e. not nil, "", false, 0,
 // or list(slice, map, channel) with len == 0.
 //
-//  if it.NotEmpty(v) {
-//    assert.Equal(t, "two", v[1])
-//  }
+//	if it.NotEmpty(v) {
+//	  assert.Equal(t, "two", v[1])
+//	}
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotEmpty(v interface{}, formatAndArgs ...interface{}) bool {
@@ -161,7 +161,7 @@ func (it *Assertions) NotEmpty(v interface{}, formatAndArgs ...interface{}) bool
 
 // True asserts that the specified value is true.
 //
-//    it.True(myBool, "myBool should be true")
+//	it.True(myBool, "myBool should be true")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) True(value bool, formatAndArgs ...interface{}) bool {
@@ -170,7 +170,7 @@ func (it *Assertions) True(value bool, formatAndArgs ...interface{}) bool {
 
 // False asserts that the specified value is false.
 //
-//    it.False(myBool, "myBool should be false")
+//	it.False(myBool, "myBool should be false")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) False(value bool, formatAndArgs ...interface{}) bool {
@@ -194,7 +194,7 @@ func (it *Assertions) NotZero(v interface{}, formatAndArgs ...interface{}) bool 
 // Len asserts that the a v has specific length.
 // Len also fails if the v has a type that len() not accept.
 //
-//    it.Len(mySlice, 3, "The size of slice is not 3")
+//	it.Len(mySlice, 3, "The size of slice is not 3")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Len(v interface{}, length int, formatAndArgs ...interface{}) bool {
@@ -203,7 +203,7 @@ func (it *Assertions) Len(v interface{}, length int, formatAndArgs ...interface{
 
 // Nil asserts that the v is nil.
 //
-//    it.Nil(err, "err should be nothing")
+//	it.Nil(err, "err should be nothing")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Nil(v interface{}, formatAndArgs ...interface{}) bool {
@@ -212,7 +212,7 @@ func (it *Assertions) Nil(v interface{}, formatAndArgs ...interface{}) bool {
 
 // NotNil asserts that the v is not nil.
 //
-//    it.NotNil(err, "err should be something")
+//	it.NotNil(err, "err should be something")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotNil(v interface{}, formatAndArgs ...interface{}) bool {
@@ -221,10 +221,10 @@ func (it *Assertions) NotNil(v interface{}, formatAndArgs ...interface{}) bool {
 
 // Error asserts that a func returned an error (i.e. not `nil`).
 //
-//   actual, err := SomeFunc()
-//   if it.Error(err, "An error was expected") {
-// 	   assert.Equal(t, err, ErrNotFound)
-//   }
+//	  actual, err := SomeFunc()
+//	  if it.Error(err, "An error was expected") {
+//		   assert.Equal(t, err, ErrNotFound)
+//	  }
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Error(err error, formatAndArgs ...interface{}) bool {
@@ -233,10 +233,10 @@ func (it *Assertions) Error(err error, formatAndArgs ...interface{}) bool {
 
 // NotError asserts that a func returned not an error (i.e. `nil`).
 //
-//   actual, err := SomeFunction()
-//   if it.NotError(err) {
-// 	   assert.Equal(t, actual, expected)
-//   }
+//	  actual, err := SomeFunction()
+//	  if it.NotError(err) {
+//		   assert.Equal(t, actual, expected)
+//	  }
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotError(err error, formatAndArgs ...interface{}) bool {
@@ -245,8 +245,8 @@ func (it *Assertions) NotError(err error, formatAndArgs ...interface{}) bool {
 
 // EqualError asserts that an error.Error() (i.e. not `nil`) is equal to expected string.
 //
-//   _, err := SomeFunc()
-//   it.EqualError(err,  errString, "An error was expected")
+//	_, err := SomeFunc()
+//	it.EqualError(err,  errString, "An error was expected")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) EqualError(err error, str string, formatAndArgs ...interface{}) bool {
@@ -255,8 +255,8 @@ func (it *Assertions) EqualError(err error, str string, formatAndArgs ...interfa
 
 // EqualErrors asserts that two errors (i.e. not `nil`) are equal.
 //
-//   _, err := SomeFunc()
-//   it.EqualErrors(err,  ErrNotFound, "An not found error was expected")
+//	_, err := SomeFunc()
+//	it.EqualErrors(err,  ErrNotFound, "An not found error was expected")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) EqualErrors(expectedErr, actualErr error, formatAndArgs ...interface{}) bool {
@@ -265,7 +265,7 @@ func (it *Assertions) EqualErrors(expectedErr, actualErr error, formatAndArgs ..
 
 // InDelta asserts that the two numerals are within delta of each other.
 //
-// 	 it.InDelta(math.Pi, (22 / 7.0), 0.01)
+//	it.InDelta(math.Pi, (22 / 7.0), 0.01)
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) InDelta(expected, actual interface{}, delta float64, formatAndArgs ...interface{}) bool {
@@ -281,7 +281,7 @@ func (it *Assertions) InDeltaSlice(expected, actual interface{}, delta float64, 
 
 // WithinDuration asserts that the two times are within duration delta of each other.
 //
-//   it.WithinDuration(time.Now(), time.Now(), 10*time.Second, "The difference should not be more than 10s")
+//	it.WithinDuration(time.Now(), time.Now(), 10*time.Second, "The difference should not be more than 10s")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) WithinDuration(expected time.Time, actual time.Time, delta time.Duration, formatAndArgs ...interface{}) bool {
@@ -290,8 +290,8 @@ func (it *Assertions) WithinDuration(expected time.Time, actual time.Time, delta
 
 // ReaderContains asserts that io.Reader contains the specified sub string or element.
 //
-//   reader := bytes.NewBuffer([]byte("Hello, world!"))
-//   it.ReaderContains(reader, "world")
+//	reader := bytes.NewBuffer([]byte("Hello, world!"))
+//	it.ReaderContains(reader, "world")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) ReaderContains(reader io.Reader, contains interface{}, formatAndArgs ...interface{}) bool {
@@ -300,8 +300,8 @@ func (it *Assertions) ReaderContains(reader io.Reader, contains interface{}, for
 
 // ReaderNotContains asserts that reader does NOT contain the specified substring or element.
 //
-//   reader := bytes.NewBuffer([]byte("Hello, world!"))
-//   it.ReaderNotContains(reader, "test")
+//	reader := bytes.NewBuffer([]byte("Hello, world!"))
+//	it.ReaderNotContains(reader, "test")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) ReaderNotContains(reader io.Reader, contains interface{}, formatAndArgs ...interface{}) bool {
@@ -310,9 +310,9 @@ func (it *Assertions) ReaderNotContains(reader io.Reader, contains interface{}, 
 
 // Panics asserts that the code inside the specified PanicTestFunc panics.
 //
-//   it.Panics(func(){
-//     GoCrazy()
-//   }, "Calling GoCrazy() should panic")
+//	it.Panics(func(){
+//	  GoCrazy()
+//	}, "Calling GoCrazy() should panic")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) Panics(f PanicTestFunc, formatAndArgs ...interface{}) bool {
@@ -321,9 +321,9 @@ func (it *Assertions) Panics(f PanicTestFunc, formatAndArgs ...interface{}) bool
 
 // NotPanics asserts that the code inside the specified PanicTestFunc does NOT panic.
 //
-//   it.NotPanics(func(){
-//     RemainCalm()
-//   }, "Calling RemainCalm() should NOT panic")
+//	it.NotPanics(func(){
+//	  RemainCalm()
+//	}, "Calling RemainCalm() should NOT panic")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotPanics(f PanicTestFunc, formatAndArgs ...interface{}) bool {
@@ -332,7 +332,7 @@ func (it *Assertions) NotPanics(f PanicTestFunc, formatAndArgs ...interface{}) b
 
 // EqualJSON asserts that two JSON strings are equivalent.
 //
-//  it.EqualJSON(`{"hello": "world", "foo": "bar"}`, `{"foo": "bar", "hello": "world"}`)
+//	it.EqualJSON(`{"hello": "world", "foo": "bar"}`, `{"foo": "bar", "hello": "world"}`)
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) EqualJSON(expected string, actual string, formatAndArgs ...interface{}) bool {
@@ -341,18 +341,27 @@ func (it *Assertions) EqualJSON(expected string, actual string, formatAndArgs ..
 
 // ContainsJSON asserts that JSON string contains value of the key.
 //
-//  it.ContainsJSON(`{"hello": "world", "foo": "bar"}`, "hello", "world")
+//	it.ContainsJSON(`{"hello": "world", "foo": "bar"}`, "hello", "world")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) ContainsJSON(actual, key string, v interface{}) bool {
 	return ContainsJSON(it.t, actual, key, v)
 }
 
-// NotContainsJSON asserts that JSON string does not contains attribute of the key.
+// NotContainsJSON asserts that JSON string does not contain attribute of the key.
 //
-//  it.NotContainsJSON(`{"hello": "world", "foo": "bar"}`, "world")
+//	it.NotContainsJSON(`{"hello": "world", "foo": "bar"}`, "world")
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (it *Assertions) NotContainsJSON(actual, key string) bool {
 	return NotContainsJSON(it.t, actual, key)
+}
+
+// NotEmptyJSON asserts that JSON string contains attribute of the key with not empty value.
+//
+//	it.NotEmptyJSON(`{"hello": "world", "foo": "bar"}`, "foo")
+//
+// Returns whether the assertion was successful (true) or not (false).
+func (it *Assertions) NotEmptyJSON(actual, key string) bool {
+	return NotEmptyJSON(it.t, actual, key)
 }
