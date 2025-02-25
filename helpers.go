@@ -3,14 +3,17 @@ package assert
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/buger/jsonparser"
 	"github.com/kr/pretty"
 	"github.com/pmezard/go-difflib/difflib"
 )
@@ -212,7 +215,7 @@ type labeledContent struct {
 // labeledOutput returns a string consisting of the provided labeledContent.
 // Each labeled output is appended in the following manner:
 //
-//   \r\t{{label}}:{{align_spaces}}\t{{content}}\n
+//	\r\t{{label}}:{{align_spaces}}\t{{content}}\n
 //
 // The initial carriage return is required to undo/erase any padding added by testing.T.Errorf. The "\t{{label}}:" is for the label.
 // If a label is shorter than the longest label provided, padding spaces are added to make all the labels match in length. Once this
@@ -298,12 +301,36 @@ func isNil(v interface{}) bool {
 	}
 
 	value := reflect.ValueOf(v)
-	kind := value.Kind()
-	if kind >= reflect.Chan && kind <= reflect.Slice && value.IsNil() {
-		return true
+	switch value.Kind() {
+	case
+		reflect.Chan, reflect.Func,
+		reflect.Interface, reflect.Map,
+		reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
+		return value.IsNil()
 	}
 
 	return false
+}
+
+func isJsonEqualObject(data string, obj interface{}) bool {
+	// first, reform json string
+	var value interface{}
+	if err := json.Unmarshal([]byte(data), &value); err != nil {
+		return false
+	}
+
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return false
+	}
+
+	// second, marshal obj with json
+	objValue, err := json.Marshal(obj)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Equal(jsonValue, objValue)
 }
 
 // getLen try to get length of v.
@@ -316,6 +343,70 @@ func getLen(v interface{}) (n int, ok bool) {
 	}()
 
 	return reflect.ValueOf(v).Len(), true
+}
+
+func getJsonValue(jsonStr, jsonKey string) ([]byte, error) {
+	var (
+		buf  = []byte(jsonStr)
+		data []byte
+		err  error
+	)
+
+	for {
+		// first, try with the raw key
+		data, _, _, err = jsonparser.Get(buf, jsonKey)
+		if err == nil {
+			buf = data
+			break
+		}
+
+		// second, pop first key if dot existed
+		parts := strings.SplitN(jsonKey, ".", 2)
+
+		yek := parts[0]
+
+		data, _, _, err = jsonparser.Get(buf, yek)
+		if err == nil {
+			buf = data
+			if len(parts) != 2 {
+				break
+			}
+
+			jsonKey = parts[1]
+
+			continue
+		}
+
+		// is the yek an subscript?
+		n, e := strconv.ParseInt(yek, 10, 32)
+		if e != nil {
+			break
+		}
+
+		var i int64
+		_, err = jsonparser.ArrayEach(buf, func(arrBuf []byte, arrType jsonparser.ValueType, arrOffset int, arrErr error) {
+			if i == n {
+				data = arrBuf
+				buf = data
+				err = arrErr
+			}
+
+			i++
+		})
+		if err != nil {
+			break
+		}
+		if len(parts) != 2 {
+			break
+		}
+
+		jsonKey = parts[1]
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 // containsElement try loop over the list check if the list includes the element.

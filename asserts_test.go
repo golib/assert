@@ -501,8 +501,8 @@ func Test_EqualFormatting(t *testing.T) {
 		formatAndArgs []interface{}
 		want          string
 	}{
-		{equalWant: "want", equalGot: "got", want: "\tasserts.go:151: \r                        \r\t\n\t\tError Trace:\t\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\n"},
-		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tasserts.go:151: \r                        \r\t\n\t\tError Trace:\t\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\r\tMessages:    \thello, world!\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", want: "\tasserts.go:148: \r                        \r\t\n\t\tError Trace:\t\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tasserts.go:148: \r                        \r\t\n\t\tError Trace:\t\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\r\tMessages:    \thello, world!\n\t\t\n"},
 	} {
 		mockT := &bufferT{}
 		Equal(mockT, currCase.equalWant, currCase.equalGot, currCase.formatAndArgs...)
@@ -1265,14 +1265,14 @@ func TestDiff(t *testing.T) {
 	//	// NOTE: map is unsorted!
 	//	expected = `
 	//
-	//--- Expected
-	//+++ Actual
-	//@@ -1 +1 @@
-	//-map[string]int{"one":1, "two":2, "three":3, "four":4}
-	//+map[string]int{"one":1, "three":3, "five":5, "seven":7}
+	// --- Expected
+	// +++ Actual
+	// @@ -1 +1 @@
+	// -map[string]int{"one":1, "two":2, "three":3, "four":4}
+	// +map[string]int{"one":1, "three":3, "five":5, "seven":7}
 	//
 	//
-	//`
+	// `
 	//
 	//	actual = diffValues(
 	//		map[string]int{"one": 1, "two": 2, "three": 3, "four": 4},
@@ -1377,34 +1377,77 @@ func TestReaderNotContains(t *testing.T) {
 func TestContainsJSON(t *testing.T) {
 	mockT := new(testing.T)
 
-	jsonstr := `{"name":"testing","items":["one", 2, {"three":3}],"status":true,"list":["one", "two", "three"],"dot.meta":"quoted meta"}`
+	jsonStr := `{"name":"testing","items":["one", 2, {"three":3}],"status":true,"list":["one", "two", "three"],"dot.meta":"quoted meta"}`
 
-	if !ContainsJSON(mockT, jsonstr, "name", "testing") {
+	if !ContainsJSON(mockT, jsonStr, "name", "testing") {
 		t.Error("ContainsJSON should return true for name")
 	}
 
-	if !ContainsJSON(mockT, jsonstr, "items.0", "one") {
+	if !ContainsJSON(mockT, jsonStr, "items.0", "one") {
 		t.Error("ContainsJSON should return true for items.0")
 	}
 
-	if !ContainsJSON(mockT, jsonstr, "items.2.three", 3) {
+	if !ContainsJSON(mockT, jsonStr, "items.2.three", 3) {
 		t.Error("ContainsJSON should return true for items.2.three")
 	}
 
-	if !ContainsJSON(mockT, jsonstr, "items.1", 2) {
+	if !ContainsJSON(mockT, jsonStr, "items.1", 2) {
 		t.Error("ContainsJSON should return true for items.1")
 	}
 
-	if !ContainsJSON(mockT, jsonstr, "status", true) {
+	if !ContainsJSON(mockT, jsonStr, "status", true) {
 		t.Error("ContainsJSON should return true for status")
 	}
 
-	if !ContainsJSON(mockT, jsonstr, regexp.QuoteMeta("dot.meta"), "quoted meta") {
+	if !ContainsJSON(mockT, jsonStr, "dot.meta", "quoted meta") {
 		t.Error("ContainsJSON should return true for dot.meta")
 	}
 
-	// // TODO: try convert between src and dst by hand!
-	//if !ContainsJSON(mockT, jsonstr, "list", []string{"one", "two", "three"}) {
-	//	t.Error("ContainsJSON should return true for list")
-	//}
+	if !ContainsJSON(mockT, jsonStr, "list", []string{"one", "two", "three"}) {
+		t.Error("ContainsJSON should return true for list")
+	}
+
+	if !ContainsJSON(mockT, jsonStr, "items.2", struct {
+		Three int `json:"three"`
+	}{Three: 3}) {
+		t.Error("ContainsJSON should return true for struct")
+	}
+}
+
+func TestNotEmptyJSON(t *testing.T) {
+	mockT := new(testing.T)
+
+	jsonStr := `{"name":"testing","items":["one", 2, {"three":3}],"status":true,"list":["one", "two", "three"],"dot.meta":"quoted meta"}`
+
+	if !NotEmptyJSON(mockT, jsonStr, "name") {
+		t.Error("NotEmptyJSON should return true for name")
+	}
+
+	if !NotEmptyJSON(mockT, jsonStr, "items.0") {
+		t.Error("NotEmptyJSON should return true for items.0")
+	}
+
+	if !NotEmptyJSON(mockT, jsonStr, "items.2.three") {
+		t.Error("NotEmptyJSON should return true for items.2.three")
+	}
+
+	if !NotEmptyJSON(mockT, jsonStr, "items.1") {
+		t.Error("NotEmptyJSON should return true for items.1")
+	}
+
+	if !NotEmptyJSON(mockT, jsonStr, "status") {
+		t.Error("NotEmptyJSON should return true for status")
+	}
+
+	if !NotEmptyJSON(mockT, jsonStr, "dot.meta") {
+		t.Error("NotEmptyJSON should return true for dot.meta")
+	}
+
+	if !NotEmptyJSON(mockT, jsonStr, "list") {
+		t.Error("NotEmptyJSON should return true for list")
+	}
+
+	if !NotEmptyJSON(mockT, jsonStr, "items.2") {
+		t.Error("NotEmptyJSON should return true for struct")
+	}
 }
