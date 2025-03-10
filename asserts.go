@@ -1,8 +1,8 @@
 package assert
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -17,47 +17,51 @@ import (
 
 // Nil asserts that the v is nil.
 //
-//	assert.Nil(t, err, "err should be nothing")
+//	assert.Nil(t, err, "it should be nil")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Nil(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+func Nil(t Testing, v any, formatAndArgs ...any) bool {
 	if isNil(v) {
 		return true
 	}
 
-	return Fail(t, pretty.Sprintf("Expected to be nil, but got: %# v", v), formatAndArgs...)
+	return Fail(t, pretty.Sprintf("Expected to be nil, but got: %#v", v), formatAndArgs...)
 }
 
 // NotNil asserts that the v is not nil.
 //
-//	assert.NotNil(t, err, "err should be something")
+//	assert.NotNil(t, err, "it should be an error")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotNil(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+func NotNil(t Testing, v any, formatAndArgs ...any) bool {
 	if !isNil(v) {
 		return true
 	}
 
-	return Fail(t, "Expected NOT to be nil.", formatAndArgs...)
+	return Fail(t, pretty.Sprintf("Expected NOT to be nil, but got: %#v", v), formatAndArgs...)
 }
 
-// Zero asserts that v is the zero value for its type and returns the truth.
-func Zero(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+// Zero asserts that v is the zero value for its type.
+//
+//	assert.Zero(t, v, "it should be zero value")
+//
+// Returns whether the assertion was successful (true) or not (false).
+func Zero(t Testing, v any, formatAndArgs ...any) bool {
 	if v != nil && !reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface()) {
-		return Fail(t,
-			pretty.Sprintf("Should be zero, but got: %# v", v),
-			formatAndArgs...)
+		return Fail(t, pretty.Sprintf("Should be zero value of %T, but got: %#v", v, v), formatAndArgs...)
 	}
 
 	return true
 }
 
-// NotZero asserts that v is not the zero value for its type and returns the truth.
-func NotZero(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+// NotZero asserts that v is not the zero value for its type.
+//
+//	assert.Zero(t, v, "it should not be zero value")
+//
+// Returns whether the assertion was successful (true) or not (false).
+func NotZero(t Testing, v any, formatAndArgs ...any) bool {
 	if v == nil || reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface()) {
-		return Fail(t,
-			pretty.Sprintf("Should NOT be zero, but got: %# v", v),
-			formatAndArgs...)
+		return Fail(t, pretty.Sprintf("Should NOT be zero value of %T, but got: %#v", v, v), formatAndArgs...)
 	}
 
 	return true
@@ -68,15 +72,15 @@ func NotZero(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 //	assert.True(t, ok, "ok should be true")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func True(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+func True(t Testing, v any, formatAndArgs ...any) bool {
 	var tv bool
-	switch v.(type) {
+	switch t := v.(type) {
 	case bool:
-		tv = v.(bool)
+		tv = t
 	}
 
-	if tv != true {
-		return Fail(t, pretty.Sprintf("Expected %# v to be true", v), formatAndArgs...)
+	if !tv {
+		return Fail(t, pretty.Sprintf("Expected %#v to be true", v), formatAndArgs...)
 	}
 
 	return true
@@ -87,15 +91,15 @@ func True(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 //	assert.False(t, ko, "ko should be false")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func False(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+func False(t Testing, v any, formatAndArgs ...any) bool {
 	var fv bool
-	switch v.(type) {
+	switch t := v.(type) {
 	case bool:
-		fv = v.(bool)
+		fv = t
 	}
 
-	if fv != false {
-		return Fail(t, pretty.Sprintf("Expected %# v to be false", v), formatAndArgs...)
+	if fv {
+		return Fail(t, pretty.Sprintf("Expected %#v to be false", v), formatAndArgs...)
 	}
 
 	return true
@@ -106,10 +110,10 @@ func False(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 //	assert.IsType(t, int, 123)
 //
 // Returns whether the assertion was successful (true) or not (false).
-func IsType(t Testing, expectedType, v interface{}, formatAndArgs ...interface{}) bool {
+func IsType(t Testing, expectedType, v any, formatAndArgs ...any) bool {
 	if !AreEqualObjects(reflect.TypeOf(v), reflect.TypeOf(expectedType)) {
 		return Fail(t,
-			fmt.Sprintf(
+			pretty.Sprintf(
 				"Expect type of values are NOT the same.%s",
 				diffValues(reflect.TypeOf(expectedType), reflect.TypeOf(v)),
 			),
@@ -124,12 +128,12 @@ func IsType(t Testing, expectedType, v interface{}, formatAndArgs ...interface{}
 //	assert.Implements(t, (*Iface)(nil), new(v))
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Implements(t Testing, iface, v interface{}, formatAndArgs ...interface{}) bool {
+func Implements(t Testing, iface, v any, formatAndArgs ...any) bool {
 	ifaceType := reflect.TypeOf(iface).Elem()
 
 	if !reflect.TypeOf(v).Implements(ifaceType) {
 		return Fail(t,
-			fmt.Sprintf("Expect %T to implement %v", v, ifaceType),
+			pretty.Sprintf("Expect %T to implement %v", v, ifaceType),
 			formatAndArgs...)
 	}
 
@@ -143,10 +147,10 @@ func Implements(t Testing, iface, v interface{}, formatAndArgs ...interface{}) b
 //	assert.Equal(t, 123, 123)
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Equal(t Testing, expected, actual interface{}, formatAndArgs ...interface{}) bool {
+func Equal(t Testing, expected, actual any, formatAndArgs ...any) bool {
 	if !AreEqualObjects(expected, actual) {
 		return Fail(t,
-			fmt.Sprintf(
+			pretty.Sprintf(
 				"Expected values are NOT equal.%s",
 				diffValues(expected, actual),
 			),
@@ -163,11 +167,11 @@ func Equal(t Testing, expected, actual interface{}, formatAndArgs ...interface{}
 //	assert.NotEqual(t, obj1, obj2, "two objects shouldn't be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotEqual(t Testing, expected, actual interface{}, formatAndArgs ...interface{}) bool {
+func NotEqual(t Testing, expected, actual any, formatAndArgs ...any) bool {
 	if AreEqualObjects(expected, actual) {
 		expected, actual = prettifyValues(expected, actual)
 
-		return Fail(t, fmt.Sprintf(
+		return Fail(t, pretty.Sprintf(
 			"Expected values are NOT equal in value.%s",
 			diffValues(expected, actual),
 		), formatAndArgs...)
@@ -181,10 +185,10 @@ func NotEqual(t Testing, expected, actual interface{}, formatAndArgs ...interfac
 //	assert.EqualValues(t, uint32(123), int32(123), "123 and 123 should be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func EqualValues(t Testing, expected, actual interface{}, formatAndArgs ...interface{}) bool {
+func EqualValues(t Testing, expected, actual any, formatAndArgs ...any) bool {
 	if !AreEqualValues(expected, actual) {
 		return Fail(t,
-			fmt.Sprintf(
+			pretty.Sprintf(
 				"Expected values are NOT equal in value.%s",
 				diffValues(expected, actual),
 			),
@@ -199,13 +203,13 @@ func EqualValues(t Testing, expected, actual interface{}, formatAndArgs ...inter
 //	assert.Exactly(t, int32(123), int64(123))
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Exactly(t Testing, expected, actual interface{}, formatAndArgs ...interface{}) bool {
+func Exactly(t Testing, expected, actual any, formatAndArgs ...any) bool {
 	expectedType := reflect.TypeOf(expected)
 	actualType := reflect.TypeOf(actual)
 
 	if expectedType != actualType {
 		return Fail(t,
-			fmt.Sprintf(
+			pretty.Sprintf(
 				"Expected values are NOT equal in type.%s",
 				diffValues(expectedType, actualType),
 			),
@@ -215,27 +219,27 @@ func Exactly(t Testing, expected, actual interface{}, formatAndArgs ...interface
 	return Equal(t, expected, actual, formatAndArgs...)
 }
 
-// Empty asserts that the v is empty.  I.e. nil, "", false, 0 or either
+// Empty asserts that the v is empty, i.e. nil, "", false, 0 or either
 // a list(slice, map, channel) with len == 0.
 //
 //	assert.Empty(t, v)
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Empty(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+func Empty(t Testing, v any, formatAndArgs ...any) bool {
 	if v == nil {
 		return true
 	}
 
 	if !types.IsEmpty(v) {
 		return Fail(t,
-			pretty.Sprintf("Expected to be empty, but got: %# v", v),
+			pretty.Sprintf("Expected to be empty, but got: %#v", v),
 			formatAndArgs...)
 	}
 
 	return true
 }
 
-// NotEmpty asserts that the v is NOT empty.  I.e. not nil, "", false, 0 or either
+// NotEmpty asserts that the v is NOT empty, i.e. not nil, "", false, 0 or either
 // a list(slice, map, channel) with len == 0.
 //
 //	if assert.NotEmpty(t, vs) {
@@ -243,10 +247,10 @@ func Empty(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 //	}
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotEmpty(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
+func NotEmpty(t Testing, v any, formatAndArgs ...any) bool {
 	if v == nil || types.IsEmpty(v) {
 		return Fail(t,
-			pretty.Sprintf("Expected not to be empty, but got: %# v", v),
+			pretty.Sprintf("Expected not to be empty, but got: %#v", v),
 			formatAndArgs...)
 	}
 
@@ -259,19 +263,20 @@ func NotEmpty(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 //	assert.Contains(t, "Hello World", "World", `"Hello World" does contain "World"`)
 //	assert.Contains(t, []string{"Hello", "World"}, "World", `["Hello", "World"] does contain "World"`)
 //	assert.Contains(t, map[string]string{"Hello": "World"}, "Hello", `{"Hello":"World"} does contain "Hello"`)
+//	assert.Contains(t, struct{Name string}{Name: "World"}, "Name", `struct{Name string} does contain "Name"`)
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Contains(t Testing, list, v interface{}, formatAndArgs ...interface{}) bool {
-	ok, found := includeElement(list, v)
+func Contains(t Testing, list, v any, formatAndArgs ...any) bool {
+	ok, found := containsElement(list, v)
 	if !ok {
 		return Fail(t,
-			pretty.Sprintf("Could not apply len() with %# v", v),
+			pretty.Sprintf("Could not iter with %#v", v),
 			formatAndArgs...)
 	}
 
 	if !found {
 		return Fail(t,
-			pretty.Sprintf("%# v does not contain `%v`", list, v),
+			pretty.Sprintf("%#v does not contain `%v`", list, v),
 			formatAndArgs...)
 	}
 
@@ -284,19 +289,20 @@ func Contains(t Testing, list, v interface{}, formatAndArgs ...interface{}) bool
 //	assert.NotContains(t, "Hello World", "Earth", `"Hello World" does NOT contain "Earth"`)
 //	assert.NotContains(t, ["Hello", "World"], "Earth", `["Hello", "World"] does NOT contain "Earth"`)
 //	assert.NotContains(t, {"Hello": "World"}, "Earth", `{"Hello": "World"} does NOT contain "Earth"`)
+//	assert.NotContains(t, struct{Name string}{Name: "World"}, "Earth", `struct{Name string} does NOT contain "Earth"`)
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotContains(t Testing, list, v interface{}, formatAndArgs ...interface{}) bool {
-	ok, found := includeElement(list, v)
+func NotContains(t Testing, list, v any, formatAndArgs ...any) bool {
+	ok, found := containsElement(list, v)
 	if !ok {
 		return Fail(t,
-			pretty.Sprintf("Could not apply len() with %# v", v),
+			pretty.Sprintf("Could not iter with %#v", list),
 			formatAndArgs...)
 	}
 
 	if found {
 		return Fail(t,
-			pretty.Sprintf("%# v contains `%v`", list, v),
+			pretty.Sprintf("%#v contains `%v`", list, v),
 			formatAndArgs...)
 	}
 
@@ -309,10 +315,10 @@ func NotContains(t Testing, list, v interface{}, formatAndArgs ...interface{}) b
 //	assert.Match(t, "start...$", "it's not starting")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Match(t Testing, reg, str interface{}, formatAndArgs ...interface{}) bool {
+func Match(t Testing, reg, str any, formatAndArgs ...any) bool {
 	if !tryMatch(reg, str) {
 		return Fail(t,
-			fmt.Sprintf("Expect string(%s) to match regexp(%s)", fmt.Sprint(str), fmt.Sprint(reg)),
+			pretty.Sprintf("Expect string(%s) to match regexp(%s)", fmt.Sprint(str), fmt.Sprint(reg)),
 			formatAndArgs...)
 	}
 
@@ -325,10 +331,10 @@ func Match(t Testing, reg, str interface{}, formatAndArgs ...interface{}) bool {
 //	assert.NotMatch(t, "^starting", "it's not starting")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotMatch(t Testing, reg, str interface{}, formatAndArgs ...interface{}) bool {
+func NotMatch(t Testing, reg, str any, formatAndArgs ...any) bool {
 	if tryMatch(reg, str) {
 		return Fail(t,
-			fmt.Sprintf("Expect string(%s) to NOT match regexp(%s)", fmt.Sprint(str), fmt.Sprint(reg)),
+			pretty.Sprintf("Expect string(%s) to NOT match regexp(%s)", fmt.Sprint(str), fmt.Sprint(reg)),
 			formatAndArgs...)
 	}
 
@@ -340,7 +346,7 @@ func NotMatch(t Testing, reg, str interface{}, formatAndArgs ...interface{}) boo
 //	assert.Condition(t, func()bool{return true;}, "It should return true")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Condition(t Testing, comp Comparison, formatAndArgs ...interface{}) bool {
+func Condition(t Testing, comp Comparison, formatAndArgs ...any) bool {
 	if !comp() {
 		return Fail(t, "Condition is failed!", formatAndArgs...)
 	}
@@ -354,36 +360,35 @@ func Condition(t Testing, comp Comparison, formatAndArgs ...interface{}) bool {
 //	assert.Len(t, aslice, 3, "The size of slice is not 3")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Len(t Testing, v interface{}, length int, formatAndArgs ...interface{}) bool {
+func Len(t Testing, v any, length int, formatAndArgs ...any) bool {
 	n, ok := getLen(v)
 	if !ok {
 		return Fail(t,
-			pretty.Sprintf("Could not apply len() with %# v", v),
+			pretty.Sprintf("Could not apply len() for %#v", v),
 			formatAndArgs...)
 	}
 
 	if n != length {
 		return Fail(t,
-			pretty.Sprintf("Expected %# v should have %d item(s), but got: %d item(s)", v, length, n),
+			pretty.Sprintf("Expected %#v should have %d item(s), but got: %d item(s)", v, length, n),
 			formatAndArgs...)
 	}
 
 	return true
 }
 
-// Error asserts that a func returned an error (i.e. not `nil`).
+// IsError asserts that a func returned an error (i.e. not `nil`).
 //
 //	  v, err := SomeFunc()
-//	  if assert.Error(t, err) {
+//	  if assert.IsError(t, err) {
 //		   assert.EqualErrors(t, err, ErrNotFound)
 //	  }
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Error(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
-	err, ok := v.(error)
-	if !ok || err == nil {
+func IsError(t Testing, v any, formatAndArgs ...any) bool {
+	if err, ok := v.(error); !ok || err == nil {
 		return Fail(t,
-			pretty.Sprintf("Expected value is an error, but got: %# v", v),
+			pretty.Sprintf("Expected value is an error, but got: %#v", v),
 			formatAndArgs...)
 	}
 
@@ -398,11 +403,14 @@ func Error(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 //	  }
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotError(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
-	err, ok := v.(error)
-	if ok && err != nil {
+func NotError(t Testing, v any, formatAndArgs ...any) bool {
+	if v == nil {
+		return true
+	}
+
+	if err, ok := v.(error); ok && err != nil {
 		return Fail(t,
-			pretty.Sprintf("Expected valus is NOT an error, but got: %# v", err),
+			pretty.Sprintf("Expected valus is NOT an error, but got: %#v", err),
 			formatAndArgs...)
 	}
 
@@ -413,15 +421,19 @@ func NotError(t Testing, v interface{}, formatAndArgs ...interface{}) bool {
 // and that it is equal to the provided error.
 //
 //	v, err := SomeFunc()
-//	assert.EqualErrors(t, err,  ErrNotFound, "Error shoule be not found")
+//	assert.EqualErrors(t, err,  ErrNotFound, "IsError should be not found")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func EqualErrors(t Testing, expected, actual interface{}, formatAndArgs ...interface{}) bool {
-	if !Error(t, expected, formatAndArgs...) {
+func EqualErrors(t Testing, expected, actual any, formatAndArgs ...any) bool {
+	if !IsError(t, expected, formatAndArgs...) {
 		return false
 	}
-	if !Error(t, actual, formatAndArgs...) {
+	if !IsError(t, actual, formatAndArgs...) {
 		return false
+	}
+
+	if errors.Is(actual.(error), expected.(error)) {
+		return true
 	}
 
 	return Equal(t, expected.(error), actual.(error), formatAndArgs...)
@@ -434,10 +446,10 @@ func EqualErrors(t Testing, expected, actual interface{}, formatAndArgs ...inter
 //	}, "Calling should panic")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func Panics(t Testing, f PanicTestFunc, formatAndArgs ...interface{}) bool {
+func Panics(t Testing, f PanicTestFunc, formatAndArgs ...any) bool {
 	if isRecovered, _ := panicRecovery(f); !isRecovered {
 		return Fail(t,
-			fmt.Sprintf("Expected Func(%T) should panic.", f),
+			pretty.Sprintf("Expected Func(%T) should panic.", f),
 			formatAndArgs...)
 	}
 
@@ -451,10 +463,10 @@ func Panics(t Testing, f PanicTestFunc, formatAndArgs ...interface{}) bool {
 //	}, "Calling should NOT panic")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotPanics(t Testing, f PanicTestFunc, formatAndArgs ...interface{}) bool {
+func NotPanics(t Testing, f PanicTestFunc, formatAndArgs ...any) bool {
 	if isRecovered, panicValue := panicRecovery(f); isRecovered {
 		return Fail(t,
-			fmt.Sprintf("Expected Func(%T) should not panic, but paniced with: %v", f, panicValue),
+			pretty.Sprintf("Expected Func(%T) should not panic, but paniced with: %v", f, panicValue),
 			formatAndArgs...)
 	}
 
@@ -466,11 +478,10 @@ func NotPanics(t Testing, f PanicTestFunc, formatAndArgs ...interface{}) bool {
 //	assert.WithinDuration(t, time.Now(), time.Now(), 10*time.Second, "The difference should not be more than 10s")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func WithinDuration(t Testing, expected, actual time.Time, delta time.Duration, formatAndArgs ...interface{}) bool {
-	dt := expected.Sub(actual)
-	if dt < -delta || dt > delta {
+func WithinDuration(t Testing, expected, actual time.Time, delta time.Duration, formatAndArgs ...any) bool {
+	if dt := expected.Sub(actual); dt < -delta || dt > delta {
 		return Fail(t,
-			fmt.Sprintf("Expected max difference between %v and %v allowed is %v, but got: %v", expected, actual, delta, dt),
+			pretty.Sprintf("Expected max difference between %v and %v allowed is %v, but got: %v", expected, actual, delta, dt),
 			formatAndArgs...)
 	}
 
@@ -482,30 +493,31 @@ func WithinDuration(t Testing, expected, actual time.Time, delta time.Duration, 
 //	assert.InDelta(t, math.Pi, (22 / 7.0), 0.01)
 //
 // Returns whether the assertion was successful (true) or not (false).
-func InDelta(t Testing, expected, actual interface{}, delta float64, formatAndArgs ...interface{}) bool {
+func InDelta(t Testing, expected, actual any, delta float64, formatAndArgs ...any) bool {
 	af, aok := toFloat(expected)
 	bf, bok := toFloat(actual)
 
 	if !aok || !bok {
-		return Fail(t, fmt.Sprintf("Parameters must be numerical"), formatAndArgs...)
+		return Fail(t, "Parameters must be numerical", formatAndArgs...)
+	}
+
+	if math.IsNaN(af) && math.IsNaN(bf) {
+		return true
 	}
 
 	if math.IsNaN(af) {
-		return Fail(t,
-			fmt.Sprintf("Actual must not be NaN"),
-			formatAndArgs...)
+		return Fail(t, "Actual must not be NaN", formatAndArgs...)
 	}
 
 	if math.IsNaN(bf) {
 		return Fail(t,
-			fmt.Sprintf("Expected %v with delta %v, but got: NaN", expected, delta),
+			pretty.Sprintf("Expected %v with delta %v, but got: NaN", expected, delta),
 			formatAndArgs...)
 	}
 
-	dt := af - bf
-	if dt < -delta || dt > delta {
+	if dt := af - bf; dt < -delta || dt > delta {
 		return Fail(t,
-			fmt.Sprintf("Expected max difference between %v and %v allowed is %v, but got: %v", expected, actual, delta, dt),
+			pretty.Sprintf("Expected max difference between %v and %v allowed is %v, but got: %v", expected, actual, delta, dt),
 			formatAndArgs...)
 	}
 
@@ -513,13 +525,11 @@ func InDelta(t Testing, expected, actual interface{}, delta float64, formatAndAr
 }
 
 // InDeltaSlice is the same as InDelta, except it compares two slices.
-func InDeltaSlice(t Testing, expected, actual interface{}, delta float64, formatAndArgs ...interface{}) bool {
+func InDeltaSlice(t Testing, expected, actual any, delta float64, formatAndArgs ...any) bool {
 	if expected == nil || actual == nil ||
 		reflect.TypeOf(actual).Kind() != reflect.Slice ||
 		reflect.TypeOf(expected).Kind() != reflect.Slice {
-		return Fail(t,
-			fmt.Sprintf("Parameters must be slice"),
-			formatAndArgs...)
+		return Fail(t, "Parameters must be slice", formatAndArgs...)
 	}
 
 	actualSlice := reflect.ValueOf(actual)
@@ -540,20 +550,22 @@ func InDeltaSlice(t Testing, expected, actual interface{}, delta float64, format
 //	assert.ReaderContains(t, http.Response.Body, "Earth", "But 'http.Response.Body' does NOT contain 'Earth'")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func ReaderContains(t Testing, reader io.Reader, contains interface{}, formatAndArgs ...interface{}) bool {
+// NOTE: It will introduce side effects on reader, use it with caution!
+func ReaderContains(t Testing, reader io.Reader, contains any, formatAndArgs ...any) bool {
+	w, ok := reader.(io.Writer)
+	if !ok {
+		return Fail(t, "Reader must implement io.Writer", formatAndArgs...)
+	}
+
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		return Fail(t,
-			fmt.Sprintf("Error read from \"%T\" of \"%s\"", reader, err.Error()),
+			pretty.Sprintf("IsError read from \"%T\" of \"%s\"", reader, err.Error()),
 			formatAndArgs...)
 	}
 
-	// try to close reader if it's io.Closer and reset reader
-	if ioc, ok := reader.(io.Closer); ok {
-		ioc.Close()
-	}
-
-	reader = io.NopCloser(bytes.NewReader(data))
+	// try to reset reader
+	_, _ = w.Write(data)
 
 	return Contains(t, string(data), contains, formatAndArgs...)
 }
@@ -563,19 +575,22 @@ func ReaderContains(t Testing, reader io.Reader, contains interface{}, formatAnd
 //	assert.ReaderNotContains(t, http.Response.Body, "Earth", "But 'http.Response.Body' does NOT contain 'Earth'")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func ReaderNotContains(t Testing, reader io.Reader, contains interface{}, formatAndArgs ...interface{}) bool {
+// NOTE: It will introduce side effects on reader, use it with caution!
+func ReaderNotContains(t Testing, reader io.Reader, contains any, formatAndArgs ...any) bool {
+	w, ok := reader.(io.Writer)
+	if !ok {
+		return Fail(t, "Reader must implement io.Writer", formatAndArgs...)
+	}
+
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		return Fail(t,
-			fmt.Sprintf("Error read from \"%T\" of \"%s\"", reader, err.Error()),
+			pretty.Sprintf("IsError read from \"%T\" of \"%s\"", reader, err.Error()),
 			formatAndArgs...)
 	}
 
-	// try to close reader if it's io.Closer and reset reader
-	if ioc, ok := reader.(io.Closer); ok {
-		ioc.Close()
-	}
-	reader = io.NopCloser(bytes.NewReader(data))
+	// try to reset reader
+	_, _ = w.Write(data)
 
 	return NotContains(t, string(data), contains, formatAndArgs...)
 }
@@ -585,18 +600,18 @@ func ReaderNotContains(t Testing, reader io.Reader, contains interface{}, format
 //	assert.EqualJSON(t, `{"hello": "world", "foo": "bar"}`, `{"foo": "bar", "hello": "world"}`)
 //
 // Returns whether the assertion was successful (true) or not (false).
-func EqualJSON(t Testing, expected, actual string, formatAndArgs ...interface{}) bool {
-	var expectedJSONAsInterface, actualJSONAsInterface interface{}
+func EqualJSON(t Testing, expected, actual string, formatAndArgs ...any) bool {
+	var expectedJSONAsInterface, actualJSONAsInterface any
 
 	if err := json.Unmarshal([]byte(expected), &expectedJSONAsInterface); err != nil {
 		return Fail(t,
-			fmt.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", expected, err.Error()),
+			pretty.Sprintf("Expected value ('%s') is not valid json.\nJSON parsing error: '%s'", expected, err.Error()),
 			formatAndArgs...)
 	}
 
 	if err := json.Unmarshal([]byte(actual), &actualJSONAsInterface); err != nil {
 		return Fail(t,
-			fmt.Sprintf("Input ('%s') needs to be valid json.\nJSON parsing error: '%s'", actual, err.Error()),
+			pretty.Sprintf("Input ('%s') needs to be valid json.\nJSON parsing error: '%s'", actual, err.Error()),
 			formatAndArgs...)
 	}
 
@@ -609,12 +624,12 @@ func EqualJSON(t Testing, expected, actual string, formatAndArgs ...interface{})
 //	assert.ContainsJSON(t, `{"hello": "world", "foo": ["foo", "bar"]}`, "foo.1", "bar")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
+func ContainsJSON(t Testing, actual, key string, value any, formatArgs ...any) bool {
 	data, err := getJsonValue(actual, key)
 	if err != nil {
-		t.Errorf("Expected contains actual key %s of value %s, but got: %+v", key, value, err)
-
-		return false
+		return Fail(t,
+			pretty.Sprintf("Expected contains actual key %s of value %s, but got: %+v", key, value, err),
+			formatArgs...)
 	}
 
 	keyValue := string(data)
@@ -686,9 +701,9 @@ func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
 		switch expectType.Kind() {
 		case reflect.Ptr:
 			if !isJsonEqualObject(keyValue, value) {
-				t.Errorf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue)
-
-				return false
+				return Fail(t,
+					pretty.Sprintf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue),
+					formatArgs...)
 			}
 
 		case reflect.Array:
@@ -704,9 +719,9 @@ func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
 
 			// second, try with json string
 			if !isJsonEqualObject(keyValue, value) {
-				t.Errorf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue)
-
-				return false
+				return Fail(t,
+					pretty.Sprintf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue),
+					formatArgs...)
 			}
 
 		case reflect.Struct:
@@ -720,24 +735,24 @@ func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
 
 			// second, try with json string
 			if !isJsonEqualObject(keyValue, value) {
-				t.Errorf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue)
-
-				return false
+				return Fail(t,
+					pretty.Sprintf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue),
+					formatArgs...)
 			}
 
 		case reflect.Func:
 			if !isJsonEqualObject(keyValue, value) {
-				t.Errorf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue)
-
-				return false
+				return Fail(t,
+					pretty.Sprintf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue),
+					formatArgs...)
 			}
 
 		}
 	}
 
-	t.Errorf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue)
-
-	return false
+	return Fail(t,
+		pretty.Sprintf("Expected contains actual key %s of value %s, but got: %s", key, value, keyValue),
+		formatArgs...)
 }
 
 // NotContainsJSON asserts that the actual does not contain JSON key.
@@ -746,11 +761,11 @@ func ContainsJSON(t Testing, actual, key string, value interface{}) bool {
 //	assert.NotContainsJSON(t, `{"hello": "world", "foo": ["foo", "bar"]}`, "foo.3")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotContainsJSON(t Testing, actual, key string) bool {
+func NotContainsJSON(t Testing, actual, key string, formatArgs ...any) bool {
 	if data, err := getJsonValue(actual, key); err == nil {
-		t.Errorf("Expected does not contain json key %q, but got: %s", key, data)
-
-		return false
+		return Fail(t,
+			pretty.Sprintf("Expected does not contain json key %q, but got: %s", key, data),
+			formatArgs...)
 	}
 
 	return true
@@ -762,17 +777,17 @@ func NotContainsJSON(t Testing, actual, key string) bool {
 //	assert.NotEmptyJSON(t, `{"hello": "world", "foo": ["foo", "bar"]}`, "foo.3")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func NotEmptyJSON(t Testing, actual, key string) bool {
+func NotEmptyJSON(t Testing, actual, key string, formatArgs ...any) bool {
 	data, err := getJsonValue(actual, key)
 	if err != nil {
-		t.Errorf("Expected contains json key %q, but got: %+v", key, err)
-
-		return false
+		return Fail(t,
+			pretty.Sprintf("Failed to get json value of key %q: %v", key, err),
+			formatArgs...)
 	}
 	if len(data) == 0 {
-		t.Errorf("Expected contains json key %q, but got: <empty>", key)
-
-		return false
+		return Fail(t,
+			pretty.Sprintf("Expected contains json key %q, but got: <empty>", key),
+			formatArgs...)
 	}
 
 	return true

@@ -11,5 +11,5 @@ require (
 
 require (
 	github.com/kr/text v0.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.13.1 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 )
