@@ -6,21 +6,44 @@ import (
 	"time"
 )
 
+type Option func(it *Assertions)
+
+func WithFailFast(failFast bool) Option {
+	return func(it *Assertions) {
+		it.fast = failFast
+	}
+}
+
 // Assertions provides asserts around the
 // Testing interface.
 type Assertions struct {
-	t Testing
+	t    Testing
+	fast bool
 }
 
-// New creates a new *Assertions for the Testing specified.
-func New(t Testing) *Assertions {
-	return &Assertions{
+// New creates a new *Assertions for the Testing.
+func New(t Testing, options ...Option) *Assertions {
+	it := &Assertions{
 		t: t,
 	}
+	for _, opt := range options {
+		opt(it)
+	}
+
+	return it
+}
+
+// NewRequire creates a new *Assertions with fail fast mode for the Testing.
+func NewRequire(t Testing) *Assertions {
+	return New(t, WithFailFast(true))
 }
 
 // Fail reports a failure through
 func (it *Assertions) Fail(message string, formatAndArgs ...interface{}) bool {
+	if it.fast {
+		return it.FailNow(message, formatAndArgs...)
+	}
+
 	return Fail(it.t, message, formatAndArgs...)
 }
 
@@ -219,16 +242,16 @@ func (it *Assertions) NotNil(v interface{}, formatAndArgs ...interface{}) bool {
 	return NotNil(it.t, v, formatAndArgs...)
 }
 
-// Error asserts that a func returned an error (i.e. not `nil`).
+// IsError asserts that a func returned an error (i.e. not `nil`).
 //
 //	  actual, err := SomeFunc()
-//	  if it.Error(err, "An error was expected") {
+//	  if it.IsError(err, "An error was expected") {
 //		   assert.Equal(t, err, ErrNotFound)
 //	  }
 //
 // Returns whether the assertion was successful (true) or not (false).
-func (it *Assertions) Error(err error, formatAndArgs ...interface{}) bool {
-	return Error(it.t, err, formatAndArgs...)
+func (it *Assertions) IsError(err error, formatAndArgs ...interface{}) bool {
+	return IsError(it.t, err, formatAndArgs...)
 }
 
 // NotError asserts that a func returned not an error (i.e. `nil`).
@@ -243,7 +266,7 @@ func (it *Assertions) NotError(err error, formatAndArgs ...interface{}) bool {
 	return NotError(it.t, err, formatAndArgs...)
 }
 
-// EqualError asserts that an error.Error() (i.e. not `nil`) is equal to expected string.
+// EqualError asserts that an error.IsError() (i.e. not `nil`) is equal to expected string.
 //
 //	_, err := SomeFunc()
 //	it.EqualError(err,  errString, "An error was expected")

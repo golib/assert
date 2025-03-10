@@ -46,6 +46,13 @@ func AreEqualValues(expected, actual interface{}) bool {
 		return false
 	}
 
+	for actualValue.Kind() == reflect.Ptr {
+		actualValue = actualValue.Elem()
+	}
+	for expectedValue.Kind() == reflect.Ptr {
+		expectedValue = expectedValue.Elem()
+	}
+
 	// Attempt comparison after type conversion
 	if expectedValue.Type().ConvertibleTo(actualValue.Type()) {
 		return reflect.DeepEqual(expectedValue.Convert(actualValue.Type()).Interface(), actual)
@@ -111,12 +118,17 @@ func StackTraces() []string {
 		}
 
 		// ignore golang packages
-		paths := strings.Split(name, "/")
+		paths := strings.Split(file, "/")
 		if len(paths) < 2 {
 			continue
 		}
 
-		callers = append(callers, fmt.Sprintf("%s:%d", paths[len(paths)-1], line))
+		if len(paths) > 2 {
+			callers = append(callers, fmt.Sprintf("%s:%d", strings.Join(paths[len(paths)-2:], "/"), line))
+		} else {
+			callers = append(callers, fmt.Sprintf("%s:%d", paths[len(paths)-1], line))
+		}
+		// callers = append(callers, fmt.Sprintf("%s:%d", file, line))
 
 		// Drop the package
 		segments := strings.Split(name, ".")
@@ -126,6 +138,10 @@ func StackTraces() []string {
 			isTest(name, "Example") {
 			break
 		}
+	}
+
+	if len(callers) > 1 {
+		return callers[:1]
 	}
 
 	return callers
@@ -140,7 +156,7 @@ func FailNow(t Testing, message string, formatAndArgs ...interface{}) bool {
 	Fail(t, message, formatAndArgs...)
 
 	// We cannot extend Testing with FailNow() and
-	// maintain backwards compatibility, so we fallback
+	// maintain backwards compatibility, so we fall back
 	// to panicking when FailNow is not available in Testing.
 	// See issue #263
 	if t, ok := t.(failNower); ok {
@@ -155,12 +171,11 @@ func FailNow(t Testing, message string, formatAndArgs ...interface{}) bool {
 // Fail reports a failure through
 func Fail(t Testing, message string, formatAndArgs ...interface{}) bool {
 	content := []labeledContent{
-		{"\nError Trace", strings.Join(StackTraces(), "\n\r\t\t\t")},
-		{"\nError", message},
+		{"Trace", strings.Join(StackTraces(), "\n\r\t\t\t")},
+		{"Error", message},
 	}
 
-	extras := formatExtraArgs(formatAndArgs...)
-	if len(extras) > 0 {
+	if extras := formatExtraArgs(formatAndArgs...); len(extras) > 0 {
 		content = append(content, labeledContent{"Messages", extras})
 	}
 
@@ -413,7 +428,7 @@ func getJsonValue(jsonStr, jsonKey string) ([]byte, error) {
 // return (false, false) if impossible.
 // return (true, false) if element was not found.
 // return (true, true) if element was found.
-func includeElement(list, element interface{}) (ok, found bool) {
+func containsElement(actual, expect interface{}) (ok, found bool) {
 	defer func() {
 		if err := recover(); err != nil {
 			ok = false
@@ -421,27 +436,59 @@ func includeElement(list, element interface{}) (ok, found bool) {
 		}
 	}()
 
-	listValue := reflect.ValueOf(list)
-	elementValue := reflect.ValueOf(element)
-
-	if reflect.TypeOf(list).Kind() == reflect.String {
-		return true, strings.Contains(listValue.String(), elementValue.String())
+	actualValue := reflect.ValueOf(actual)
+	for actualValue.Kind() == reflect.Ptr {
+		actualValue = actualValue.Elem()
 	}
 
-	if reflect.TypeOf(list).Kind() == reflect.Map {
-		mapKeys := listValue.MapKeys()
+	expectValue := reflect.ValueOf(expect)
+	for expectValue.Kind() == reflect.Ptr {
+		expectValue = expectValue.Elem()
+	}
+
+	switch actualValue.Kind() {
+	case reflect.String:
+		return true, strings.Contains(actualValue.String(), expectValue.String())
+
+	case reflect.Map:
+		mapKeys := actualValue.MapKeys()
 		for i := 0; i < len(mapKeys); i++ {
-			if AreEqualObjects(mapKeys[i].Interface(), element) {
+			if AreEqualObjects(mapKeys[i].Interface(), expect) {
 				return true, true
 			}
 		}
 
 		return true, false
-	}
 
-	for i := 0; i < listValue.Len(); i++ {
-		if AreEqualObjects(listValue.Index(i).Interface(), element) {
-			return true, true
+	case reflect.Struct:
+		for i := 0; i < actualValue.NumField(); i++ {
+			field := actualValue.Type().Field(i)
+			if !field.IsExported() {
+				continue
+			}
+
+			if tagName := field.Tag.Get("json"); tagName != "" {
+				if AreEqualObjects(tagName, expect) {
+					return true, true
+				}
+			} else {
+				if AreEqualObjects(field.Name, expect) {
+					return true, true
+				}
+			}
+		}
+
+		return true, false
+
+	default:
+		for i := 0; i < actualValue.Len(); i++ {
+			if !actualValue.Index(i).CanInterface() {
+				continue
+			}
+
+			if AreEqualObjects(actualValue.Index(i).Interface(), expect) {
+				return true, true
+			}
 		}
 	}
 

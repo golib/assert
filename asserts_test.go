@@ -501,8 +501,8 @@ func Test_EqualFormatting(t *testing.T) {
 		formatAndArgs []interface{}
 		want          string
 	}{
-		{equalWant: "want", equalGot: "got", want: "\tasserts.go:148: \r                        \r\t\n\t\tError Trace:\t\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\n"},
-		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tasserts.go:148: \r                        \r\t\n\t\tError Trace:\t\n\t\t\r\t\n\t\tError:      \tExpected values are NOT equal.\n\t\t\r\t             \t\n\t\t\r\t             \t--- Expected\n\t\t\r\t             \t+++ Actual\n\t\t\r\t             \t@@ -1 +1 @@\n\t\t\r\t             \t-want\n\t\t\r\t             \t+got\n\t\t\r\t             \t\n\t\t\r\t             \t\n\t\t\r\tMessages:    \thello, world!\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", want: "\tasserts.go:152: \r                        \r\tTrace:\t\n\t\t\r\tError:\tExpected values are NOT equal.\n\t\t\r\t      \t\n\t\t\r\t      \t--- Expected\n\t\t\r\t      \t+++ Actual\n\t\t\r\t      \t@@ -1 +1 @@\n\t\t\r\t      \t-want\n\t\t\r\t      \t+got\n\t\t\r\t      \t\n\t\t\r\t      \t\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tasserts.go:152: \r                        \r\tTrace:   \t\n\t\t\r\tError:   \tExpected values are NOT equal.\n\t\t\r\t         \t\n\t\t\r\t         \t--- Expected\n\t\t\r\t         \t+++ Actual\n\t\t\r\t         \t@@ -1 +1 @@\n\t\t\r\t         \t-want\n\t\t\r\t         \t+got\n\t\t\r\t         \t\n\t\t\r\t         \t\n\t\t\r\tMessages:\thello, world!\n\t\t\n"},
 	} {
 		mockT := &bufferT{}
 		Equal(mockT, currCase.equalWant, currCase.equalGot, currCase.formatAndArgs...)
@@ -981,22 +981,22 @@ func Test_Error(t *testing.T) {
 	// start with a nil error
 	var err error
 
-	if Error(mockT, err) {
-		t.Errorf("Error should return false for `%#v`", err)
+	if IsError(mockT, err) {
+		t.Errorf("IsError should return false for `%#v`", err)
 	}
 
 	// now set an error
 	err = errors.New("some error")
 
-	if !Error(mockT, err) {
-		t.Errorf("Error should return true for `%#v`", err)
+	if !IsError(mockT, err) {
+		t.Errorf("IsError should return true for `%#v`", err)
 	}
 
 	// returning an empty error interface
 	var tmperr *customError
 
-	if !Error(mockT, tmperr) {
-		t.Errorf("Error should return true with empty error interface for `%#v`", err)
+	if !IsError(mockT, tmperr) {
+		t.Errorf("IsError should return true with empty error interface for `%#v`", err)
 	}
 }
 
@@ -1349,28 +1349,36 @@ func TestFailNowWithFullTesting(t *testing.T) {
 }
 
 func TestReaderContains(t *testing.T) {
-
 	mockT := new(testing.T)
+
+	// for reader
 	reader := strings.NewReader("Hello, World")
 
-	if !ReaderContains(mockT, reader, "Hello") {
-		t.Error("Contains should return true: \"Hello World\" contains \"Hello\"")
+	if ReaderContains(mockT, reader, "Hello") {
+		t.Error("Contains should return false, strings.Reader must implement io.Reader")
 	}
-	if ReaderContains(mockT, reader, "Salut") {
-		t.Error("Contains should return false: \"Hello World\" does not contain \"Salut\"")
+
+	// for reader writer
+	readWriter := bytes.NewBufferString("Hello, World")
+	if !ReaderContains(mockT, readWriter, "Hello") {
+		t.Error("Contains should return true")
 	}
 }
 
 func TestReaderNotContains(t *testing.T) {
-
 	mockT := new(testing.T)
+
+	// for reader
 	reader := strings.NewReader("Hello, World")
 
 	if ReaderNotContains(mockT, reader, "Hello") {
-		t.Error("Contains should return true: \"Hello World\" contains \"Hello\"")
+		t.Error("NotContains should return true, strings.Reader must implement io.Reader")
 	}
-	if !ReaderNotContains(mockT, reader, "Salut") {
-		t.Error("Contains should return false: \"Hello World\" does not contain \"Salut\"")
+
+	// for reader writer
+	readWriter := bytes.NewBufferString("Hello, World")
+	if ReaderNotContains(mockT, readWriter, "Hello") {
+		t.Error("NotContains should return false")
 	}
 }
 

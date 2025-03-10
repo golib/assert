@@ -267,12 +267,12 @@ func TestErrorWrapper(t *testing.T) {
 	// start with a nil error
 	var err error
 
-	assert.False(mockAssert.Error(err), "Error should return False for nil arg")
+	assert.False(mockAssert.IsError(err), "IsError should return False for nil arg")
 
 	// now set an error
 	err = errors.New("Some error")
 
-	assert.True(mockAssert.Error(err), "Error with error should return True")
+	assert.True(mockAssert.IsError(err), "IsError with error should return True")
 
 }
 
