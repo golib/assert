@@ -6,8 +6,10 @@ import (
 	"time"
 )
 
+// Option config Assertions in flying.
 type Option func(it *Assertions)
 
+// WithFailFast sets fail fast of assertion.
 func WithFailFast(failFast bool) Option {
 	return func(it *Assertions) {
 		it.fast = failFast
