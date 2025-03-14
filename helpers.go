@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -14,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/buger/jsonparser"
+	"github.com/dolab/colorize"
 	"github.com/kr/pretty"
 	"github.com/pmezard/go-difflib/difflib"
 )
@@ -118,7 +120,8 @@ func StackTraces() []string {
 		}
 
 		// ignore golang packages
-		paths := strings.Split(file, "/")
+		root, _ := os.Getwd()
+		paths := strings.Split(strings.TrimPrefix(file, root), "/")
 		if len(paths) < 2 {
 			continue
 		}
@@ -147,11 +150,7 @@ func StackTraces() []string {
 	return callers
 }
 
-type failNower interface {
-	FailNow()
-}
-
-// FailNow fails test
+// FailNow fails test case and quit, or panic if Testing doesn't implement FailNow.
 func FailNow(t Testing, message string, formatAndArgs ...interface{}) bool {
 	Fail(t, message, formatAndArgs...)
 
@@ -159,10 +158,10 @@ func FailNow(t Testing, message string, formatAndArgs ...interface{}) bool {
 	// maintain backwards compatibility, so we fall back
 	// to panicking when FailNow is not available in Testing.
 	// See issue #263
-	if t, ok := t.(failNower); ok {
-		t.FailNow()
+	if nower, ok := t.(failNower); ok {
+		nower.FailNow()
 	} else {
-		panic("test failed and t does not implement `FailNow()`")
+		panic(fmt.Sprintf("test failed and %T does not implement `FailNow()`", t))
 	}
 
 	return false
@@ -190,11 +189,23 @@ func formatExtraArgs(formatAndArgs ...interface{}) string {
 	}
 
 	if len(formatAndArgs) == 1 {
-		return formatAndArgs[0].(string)
+		switch t := formatAndArgs[0].(type) {
+		case string:
+			return t
+		case []byte:
+			return string(t)
+		default:
+			return fmt.Sprintf("%v", t)
+		}
 	}
 
 	if len(formatAndArgs) > 1 {
-		return fmt.Sprintf(formatAndArgs[0].(string), formatAndArgs[1:]...)
+		switch t := formatAndArgs[0].(type) {
+		case string:
+			return fmt.Sprintf(t, formatAndArgs[1:]...)
+		default:
+			return fmt.Sprintf("%v", formatAndArgs)
+		}
 	}
 
 	return ""
@@ -204,19 +215,19 @@ func formatExtraArgs(formatAndArgs ...interface{}) string {
 // representations appropriate to be presented to the user.
 //
 // If the values are not of like type, the returned strings will be prefixed
-// with the type name, and the value will be enclosed in parenthesis similar
+// with the type name, and the value will be enclosed in parentheses similar
 // to a type conversion in the Go grammar.
-func prettifyValues(expected, actual interface{}) (es string, as string) {
+func prettifyValues(expected, actual interface{}) (es, as string) {
 	if extype, ok := expected.(reflect.Type); ok {
 		es = extype.Name()
 	} else {
-		es = pretty.Sprintf("%# v", expected)
+		es = pretty.Sprintf("%#v", expected)
 	}
 
 	if actype, ok := actual.(reflect.Type); ok {
 		as = actype.Name()
 	} else {
-		as = pretty.Sprintf("%# v", actual)
+		as = pretty.Sprintf("%#v", actual)
 	}
 
 	return
@@ -304,9 +315,9 @@ func isTest(name, prefix string) bool {
 		return true
 	}
 
-	rune, _ := utf8.DecodeRuneInString(name[len(prefix):])
+	r, _ := utf8.DecodeRuneInString(name[len(prefix):])
 
-	return !unicode.IsLower(rune)
+	return !unicode.IsLower(r)
 }
 
 // isNil checks if a specified v is nil or not, without Failing.
@@ -317,35 +328,13 @@ func isNil(v interface{}) bool {
 
 	value := reflect.ValueOf(v)
 	switch value.Kind() {
-	case
-		reflect.Chan, reflect.Func,
+	case reflect.Chan, reflect.Func,
 		reflect.Interface, reflect.Map,
 		reflect.Ptr, reflect.Slice, reflect.UnsafePointer:
 		return value.IsNil()
-	}
-
-	return false
-}
-
-func isJsonEqualObject(data string, obj interface{}) bool {
-	// first, reform json string
-	var value interface{}
-	if err := json.Unmarshal([]byte(data), &value); err != nil {
+	default:
 		return false
 	}
-
-	jsonValue, err := json.Marshal(value)
-	if err != nil {
-		return false
-	}
-
-	// second, marshal obj with json
-	objValue, err := json.Marshal(obj)
-	if err != nil {
-		return false
-	}
-
-	return bytes.Equal(jsonValue, objValue)
 }
 
 // getLen try to get length of v.
@@ -422,6 +411,27 @@ func getJsonValue(jsonStr, jsonKey string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func isJsonEqualObject(data string, obj interface{}) bool {
+	// first, reform json string
+	var value interface{}
+	if err := json.Unmarshal([]byte(data), &value); err != nil {
+		return false
+	}
+
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return false
+	}
+
+	// second, marshal obj with json
+	objValue, err := json.Marshal(obj)
+	if err != nil {
+		return false
+	}
+
+	return bytes.Equal(jsonValue, objValue)
 }
 
 // containsElement try loop over the list check if the list includes the element.
@@ -530,13 +540,13 @@ func toFloat(x interface{}) (float64, bool) {
 }
 
 // diffValues returns a diff of both values as long as both are of the same type and
-// are a struct, map, slice or array. Otherwise it returns an empty string.
+// are a struct, map, slice or array. Otherwise, it returns an empty string.
 func diffValues(expected, actual interface{}) string {
-	expecteds, actuals := prettifyValues(expected, actual)
+	expectStr, actualStr := prettifyValues(expected, actual)
 
 	diffs, err := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-		A:        difflib.SplitLines(expecteds),
-		B:        difflib.SplitLines(actuals),
+		A:        difflib.SplitLines(expectStr),
+		B:        difflib.SplitLines(actualStr),
 		FromFile: "Expected",
 		FromDate: "",
 		ToFile:   "Actual",
@@ -550,10 +560,30 @@ func diffValues(expected, actual interface{}) string {
 			return ""
 		}
 
-		return fmt.Sprintf("\n\n%v\n\n", diffs)
+		return fmt.Sprintf("\n\n%v\n", diffs)
 	}
 
-	return fmt.Sprintf("\n\n%s\n\n", diffs)
+	return fmt.Sprintf("\n\n%s\n", diffColorize(diffs))
+}
+
+func diffColorize(diffs string) string {
+	paint := colorize.New("yellow")
+
+	lines := strings.Split(diffs, "\n")
+	for i, line := range lines {
+		switch {
+		case strings.HasPrefix(line, "+"):
+			paint.SetFgColor(colorize.ColorBlue)
+		case strings.HasPrefix(line, "-"):
+			paint.SetFgColor(colorize.ColorRed)
+		default:
+			paint.SetFgColor(colorize.ColorGray)
+		}
+
+		lines[i] = paint.Paint(line)
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // panicRecovery returns true if the function passed to it panics. Otherwise, it returns false.

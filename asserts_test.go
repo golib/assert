@@ -501,8 +501,8 @@ func Test_EqualFormatting(t *testing.T) {
 		formatAndArgs []interface{}
 		want          string
 	}{
-		{equalWant: "want", equalGot: "got", want: "\tasserts.go:152: \r                        \r\tTrace:\t\n\t\t\r\tError:\tExpected values are NOT equal.\n\t\t\r\t      \t\n\t\t\r\t      \t--- Expected\n\t\t\r\t      \t+++ Actual\n\t\t\r\t      \t@@ -1 +1 @@\n\t\t\r\t      \t-want\n\t\t\r\t      \t+got\n\t\t\r\t      \t\n\t\t\r\t      \t\n\t\t\n"},
-		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tasserts.go:152: \r                        \r\tTrace:   \t\n\t\t\r\tError:   \tExpected values are NOT equal.\n\t\t\r\t         \t\n\t\t\r\t         \t--- Expected\n\t\t\r\t         \t+++ Actual\n\t\t\r\t         \t@@ -1 +1 @@\n\t\t\r\t         \t-want\n\t\t\r\t         \t+got\n\t\t\r\t         \t\n\t\t\r\t         \t\n\t\t\r\tMessages:\thello, world!\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", want: "\tasserts.go:152: \r                        \r\tTrace:\t\n\t\t\r\tError:\tExpected values are NOT equal.\n\t\t\r\t      \t\n\t\t\r\t      \t\x1b[0;31m--- Expected\x1b[0m\n\t\t\r\t      \t\x1b[0;34m+++ Actual\x1b[0m\n\t\t\r\t      \t\x1b[0;38m@@ -1 +1 @@\x1b[0m\n\t\t\r\t      \t\x1b[0;31m-\"want\"\x1b[0m\n\t\t\r\t      \t\x1b[0;34m+\"got\"\x1b[0m\n\t\t\r\t      \t\x1b[0;38m\x1b[0m\n\t\t\n"},
+		{equalWant: "want", equalGot: "got", formatAndArgs: []interface{}{"hello, %v!", "world"}, want: "\tasserts.go:152: \r                        \r\tTrace:   \t\n\t\t\r\tError:   \tExpected values are NOT equal.\n\t\t\r\t         \t\n\t\t\r\t         \t\x1b[0;31m--- Expected\x1b[0m\n\t\t\r\t         \t\x1b[0;34m+++ Actual\x1b[0m\n\t\t\r\t         \t\x1b[0;38m@@ -1 +1 @@\x1b[0m\n\t\t\r\t         \t\x1b[0;31m-\"want\"\x1b[0m\n\t\t\r\t         \t\x1b[0;34m+\"got\"\x1b[0m\n\t\t\r\t         \t\x1b[0;38m\x1b[0m\n\t\t\r\tMessages:\thello, world!\n\t\t\n"},
 	} {
 		mockT := &bufferT{}
 		Equal(mockT, currCase.equalWant, currCase.equalGot, currCase.formatAndArgs...)
@@ -1056,6 +1056,13 @@ func Test_EqualErrors(t *testing.T) {
 	if EqualErrors(mockT, tmperr, newerr) {
 		t.Errorf("EqualErrors should return false for different %#v and %#v", err, tmperr)
 	}
+
+	var (
+		nilerr error
+	)
+	if EqualErrors(mockT, newerr, nilerr) {
+		t.Errorf("EqualErrors should return false for %#v and %#v", newerr, nilerr)
+	}
 }
 
 func Test_Panics(t *testing.T) {
@@ -1214,48 +1221,24 @@ func TestEqualJSON_ArraysOfDifferentOrder(t *testing.T) {
 }
 
 func TestDiff(t *testing.T) {
-	expected := `
+	expected := "\n\n\x1b[0;31m--- Expected\x1b[0m\n\x1b[0;34m+++ Actual\x1b[0m\n\x1b[0;38m@@ -1 +1 @@\x1b[0m\n\x1b[0;31m-struct { foo string }{foo:\"hello\"}\x1b[0m\n\x1b[0;34m+struct { foo string }{foo:\"bar\"}\x1b[0m\n\x1b[0;38m\x1b[0m\n"
 
---- Expected
-+++ Actual
-@@ -1 +1 @@
--struct { foo string }{foo:"hello"}
-+struct { foo string }{foo:"bar"}
-
-
-`
 	actual := diffValues(
 		struct{ foo string }{"hello"},
 		struct{ foo string }{"bar"},
 	)
 	Equal(t, expected, actual)
 
-	expected = `
+	expected = "\n\n\x1b[0;31m--- Expected\x1b[0m\n\x1b[0;34m+++ Actual\x1b[0m\n\x1b[0;38m@@ -1 +1 @@\x1b[0m\n\x1b[0;31m-[]int{1, 2, 3, 4}\x1b[0m\n\x1b[0;34m+[]int{1, 3, 5, 7}\x1b[0m\n\x1b[0;38m\x1b[0m\n"
 
---- Expected
-+++ Actual
-@@ -1 +1 @@
--[]int{1, 2, 3, 4}
-+[]int{1, 3, 5, 7}
-
-
-`
 	actual = diffValues(
 		[]int{1, 2, 3, 4},
 		[]int{1, 3, 5, 7},
 	)
 	Equal(t, expected, actual)
 
-	expected = `
+	expected = "\n\n\x1b[0;31m--- Expected\x1b[0m\n\x1b[0;34m+++ Actual\x1b[0m\n\x1b[0;38m@@ -1 +1 @@\x1b[0m\n\x1b[0;31m-[]int{1, 2, 3}\x1b[0m\n\x1b[0;34m+[]int{1, 3, 5}\x1b[0m\n\x1b[0;38m\x1b[0m\n"
 
---- Expected
-+++ Actual
-@@ -1 +1 @@
--[]int{1, 2, 3}
-+[]int{1, 3, 5}
-
-
-`
 	actual = diffValues(
 		[]int{1, 2, 3, 4}[0:3],
 		[]int{1, 3, 5, 7}[0:3],
